@@ -1,0 +1,97 @@
+FILE: spec/fixtures/variables.cream
+{:program=>
+  [{:assignment=>{:identifier=>"number"@0, :value=>{:integer=>"1234"@9}}},
+   {:assignment=>{:identifier=>"float"@14, :value=>{:float=>"3.14159"@22}}},
+   {:assignment=>
+     {:identifier=>"string"@30, :value=>{:string=>"Hello, World!"@40}}},
+   {:funcall=>{:identifier=>"println"@99},
+    :arglist=>{:identifier=>"number"@107}},
+   {:funcall=>{:identifier=>"println"@115},
+    :arglist=>
+     [{:identifier=>"float"@123}, {:string=>"<- float, not integer"@131}]},
+   {:funcall=>{:identifier=>"println"@155},
+    :arglist=>{:identifier=>"string"@163}}]}
+FILE: spec/fixtures/complex.cream
+{:program=>
+  [{:funcdef=>
+     {:identifier=>"nestedstructures"@3,
+      :arglist=>nil,
+      :body=>
+       [{:if=>
+          {:condition=>{:identifier=>"something"@30},
+           :body=>
+            [{:funcall=>{:identifier=>"println"@46},
+              :arglist=>{:string=>"I will eat your soul."@55}}]},
+         :else=>
+          {:body=>
+            [{:if=>
+               {:condition=>{:identifier=>"somethingelse"@97},
+                :body=>
+                 [{:repeat=>
+                    {:identifier=>"numtimes"@126,
+                     :body=>
+                      [{:funcall=>{:identifier=>"somethingselse"@145},
+                        :arglist=>nil}]}}]},
+              :else=>nil}]}}]}}]}
+FILE: spec/fixtures/structures.cream
+Duplicate subtrees while merging result of 
+  foreach:('foreach' LOOSE_SPACE IDENTIFIER LOOSE_SPACE 'in' LOOSE_SPACE EXPRESSION LOOSE_SPACE BLOCK)
+only the values of the latter will be kept. (keys: [:identifier])
+{:program=>
+  [{:assignment=>{:identifier=>"truedat"@0, :value=>{:boolean=>"true"@10}}},
+   {:if=>
+     {:condition=>{:identifier=>"truedat"@19},
+      :body=>
+       [{:funcall=>{:identifier=>"println"@32},
+         :arglist=>{:string=>"True dat man..."@41}}]},
+    :else=>
+     {:body=>
+       [{:funcall=>{:identifier=>"explode"@70},
+         :arglist=>{:string=>"Ah! Wasn't supposed to happen!"@79}}]}},
+   {:repeat=>
+     {:integer=>"2"@122,
+      :body=>
+       [{:funcall=>{:identifier=>"println"@128},
+         :arglist=>{:string=>"Echo!"@137}}]}},
+   {:assignment=>
+     {:identifier=>"array"@148,
+      :value=>
+       {:array=>
+         [{:integer=>"1"@157},
+          {:integer=>"2"@159},
+          {:integer=>"3"@161},
+          {:integer=>"4"@163},
+          {:integer=>"5"@165}]}}},
+   {:foreach=>
+     {:identifier=>"array"@185,
+      :body=>
+       [{:funcall=>{:identifier=>"println"@195},
+         :arglist=>{:identifier=>"item"@203}}]}}]}
+FILE: spec/fixtures/dangerous.cream
+{:program=>
+  [{:string=>"Forever alone"@22},
+   {:integer=>"123"@38},
+   {:integer=>"345"@42},
+   {:identifier=>"yolo"@46},
+   {:funcdef=>
+     {:identifier=>"stuff"@55,
+      :arglist=>nil,
+      :body=>[{:string=>"I like you. ;)"@79}]}},
+   {:funcdef=>{:identifier=>"moarstuff"@119, :arglist=>nil, :body=>[]}}]}
+FILE: spec/fixtures/functions.cream
+{:program=>
+  [{:funcdef=>
+     {:identifier=>"addtwo"@3,
+      :arglist=>{:identifier=>"number"@10},
+      :body=>
+       [{:funcall=>{:identifier=>"puts"@22},
+         :arglist=>{:identifier=>"number"@27}}]}},
+   {:funcall=>{:identifier=>"print"@73}, :arglist=>{:string=>"2 + 2 = "@80}},
+   {:funcall=>{:identifier=>"print"@108},
+    :arglist=>
+     {:funcall=>{:identifier=>"addtwo"@114}, :arglist=>{:integer=>"2"@121}}},
+   {:funcall=>{:identifier=>"println"@125}, :arglist=>{:string=>[]}}]}
+FILE: spec/fixtures/hello_world.cream
+{:program=>
+  [{:funcall=>{:identifier=>"println"@0},
+    :arglist=>{:string=>"Hello, World!"@9}}]}

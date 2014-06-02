@@ -1,0 +1,17 @@
+truedat = true
+
+if truedat { 
+  println("True dat man...")
+} else {
+  explode("Ah! Wasn't supposed to happen!")
+}
+
+repeat 2 {
+  println("Echo!")
+}
+
+# array = [1,2,3,4,5]
+
+foreach item in array {
+  println(item)
+}

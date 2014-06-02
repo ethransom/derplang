@@ -1,0 +1,13 @@
+something = true
+
+fn nestedstructures () {
+  if something {
+    println("I will eat your soul.")
+  } else {
+    if somethingelse {
+      # repeat numtimes {
+        # somethingselse()
+      # }
+    }
+  }
+}

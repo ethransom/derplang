@@ -1,0 +1,3 @@
+1234
+3.14159 <- float, not integer
+Hello, World!
