@@ -3,7 +3,7 @@ FLAGS=-Wall -std=c99
 # PRODUCTION_FLAGS=
 CFLAGS=-g $(FLAGS)
 
-Modules = list.o cream_obj.o vm.o utils.o stdlib.o parser.o bytecode_parser.o map.o mpc.o
+Modules = list.o object.o vm.o utils.o stdlib.o parser.o bytecode_parser.o map.o mpc.o
 
 Tests = test/parser_test.o
 
@@ -19,3 +19,6 @@ clean:
 
 dist: $(Modules) main.c
 	gcc -o cream $(FLAGS) -lm -Ofast -DNDEBUG $(Modules) main.c
+
+# DERPS are meant for testing
+derp/object_derp: object.o

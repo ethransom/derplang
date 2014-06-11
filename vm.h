@@ -9,6 +9,7 @@
 #include "map.h"
 #include "utils.h"
 #include "debug.h"
+#include "object.h"
 
 #define MAX_LINE_LEN 64
 #define MAX_IDENT_LEN 16
@@ -57,18 +58,6 @@ typedef struct {
   char* name;
   Cream_native_fn fn;
 } Cream_native;
-
-typedef enum {
-  TYPE_STRING,
-  TYPE_INTEGER,
-  TYPE_FLOAT,
-  TYPE_BOOLEAN
-} Cream_data_type;
-
-typedef struct {
-  Cream_data_type type;
-  void* data;
-} Cream_data;
 
 #include "stdlib.h"
 

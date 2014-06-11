@@ -5,7 +5,7 @@
 // #include "cream_fn.h"
 #include "debug.h"
 #include "vm.h"
-#include "cream_obj.h"
+#include "object.h"
 #include "list.h"
 #include "bytecode_parser.h"
 #include "parser.h"

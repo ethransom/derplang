@@ -3,14 +3,26 @@
 
 #include <stdio.h>
 
-#include "cream_obj.h"
+#include "debug.h"
+#include "object.h"
 
-Cream_obj* cream_obj_create(int id) {
+Cream_obj* cream_obj_create() {
 	// puts("cream obj created");
 	Cream_obj *obj = malloc(sizeof(Cream_obj));
-	assert(obj != NULL);
+	check_mem(obj);
+
+	obj->type = TYPE_OBJECT;
+
+	obj->flags = 0;
 
 	return obj;
+
+error:
+	return NULL;
+}
+
+void cream_obj_freeze(Cream_obj *obj) {
+	obj->flags |= FLAG_FROZEN;
 }
 
 void cream_obj_destroy(Cream_obj *obj) {
