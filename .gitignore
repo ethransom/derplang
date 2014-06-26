@@ -6,3 +6,5 @@ cream
 
 .tags
 .tags_sorted_by_file
+lex.yy.c
+grammar.tab.*

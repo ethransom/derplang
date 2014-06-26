@@ -132,7 +132,7 @@ void cream_vm_run(Cream_vm *vm) {
 		switch ((vm->bytecode)[pointer].code) {
 			case CODE_PUSH: {
 				debug("Evaluating push");
-				Cream_data* data = malloc(sizeof(Cream_data));
+				Cream_obj* data = malloc(sizeof(Cream_obj));
 				check_mem(data);
 
 				data->type = (int) arg2;
@@ -197,13 +197,13 @@ void cream_vm_run(Cream_vm *vm) {
 			case CODE_PUSH_LOOKUP: {
 				debug("pushing contents of '%s' to stack", arg1);
 				Stack_frame* frame = (Stack_frame*) vm->call_stack->last->data;
-				Cream_data* data = Map_get(frame->symbol_table, arg1);
+				Cream_obj* data = Map_get(frame->symbol_table, arg1);
 				List_push(vm->stack, data);
 			}
 				break;
 			case CODE_ASSIGN: {
 				debug("assigning to %s", arg1);
-				Cream_data* data = List_pop(vm->stack);
+				Cream_obj* data = List_pop(vm->stack);
 				Stack_frame* frame = (Stack_frame*) vm->call_stack->last->data;
 				Map_set(frame->symbol_table, arg1, data);
 			}

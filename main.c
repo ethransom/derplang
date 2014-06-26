@@ -9,6 +9,8 @@
 #include "list.h"
 #include "bytecode_parser.h"
 #include "parser.h"
+#include "grammar.tab.h"
+#include "lexer.h"
 
 #define EXIT_SUCCESS   0
 #define EXIT_PROG_ERR  1
@@ -44,6 +46,7 @@ const struct option long_options[] = {
 };
 
 int main(int argc, char *argv[]) {
+	bool parse_flag = false;
 	bool use_stdin = false;
 	debug_flag = 0;
 
@@ -59,9 +62,9 @@ int main(int argc, char *argv[]) {
 			case 's':
 				use_stdin = true;
 				break;
-      case 'p':
-        return !cream_parse("+ *(3");
-        break;
+			case 'p':
+				return parse_flag = true;
+				break;
 #ifndef NDEBUG
 			case 'v':
 				debug_flag = 1;
@@ -80,29 +83,39 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
+	if (parse_flag) {
+		do {
+			yyparse();
+		} while (!feof(yyin));
+	}
 
 	int val = EXIT_SUCCESS;
-
+	
 	Cream_vm* vm = cream_vm_create();
+
+	FILE* input;
 
 	if (use_stdin) {
 		debug("using 'stdin' as input");
-		check(cream_bytecode_parse_stream(stdin, vm) == 1, "stdin parse failed");
+		input = stdin;
 	} else {
-		if (!(optind < argc)) {
-			fprintf(stderr, "No input files given\n");
+		int filec = argc - optind;
+
+		if (filec == 0) {
+			fprintf(stderr, "No input file given\n");
 			print_usage(stderr, argv[0]);
 			exit(EXIT_BAD_ARGS);
 		}
 
-		for (int i = optind; i < argc; ++i) {
-			debug("reading file '%s'", argv[i]);
-			FILE* file = fopen(argv[i], "r");
-			check(file != NULL, "Failed to open file '%s'", argv[i])
-			check(cream_bytecode_parse_stream(file, vm) == 1, "parse of file '%s' failed", argv[i]);
+		if (filec > 1) {
+			log_warn("more than one input file given--ignoring all but first");
 		}
+
+		debug("reading file '%s'", argv[optind]);
+		input = fopen(argv[optind], "r");
 	}
 
+	check(cream_bytecode_parse_stream(input, vm) == 1, "parse failed");
 
 	cream_vm_run(vm);
 

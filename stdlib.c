@@ -13,7 +13,7 @@ void cream_stdlib_println(Cream_vm* vm, int argc) {
 void cream_stdlib_print(Cream_vm* vm, int argc) {
 	for (int i = 0; i < argc; i++) {
 		check(vm->stack->length > 0, "'print': ran out of stack! :(");
-		Cream_data* data = List_pop(vm->stack);
+		Cream_obj* data = List_pop(vm->stack);
 
 		debug("Printing type: %d", data->type);
 
