@@ -3,7 +3,7 @@ FLAGS=-Wall -std=c99
 # PRODUCTION_FLAGS=
 CFLAGS=-g $(FLAGS)
 
-Modules = list.o object.o vm.o utils.o stdlib.o parser.o bytecode_parser.o map.o mpc.o grammar.tab.o lex.yy.o
+Modules = list.o object.o vm.o utils.o stdlib.o bytecode_parser.o map.o ast_nodes.o grammar.tab.o lex.yy.o
 
 Tests = test/parser_test.o
 

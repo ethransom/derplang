@@ -8,9 +8,11 @@
 #include "object.h"
 #include "list.h"
 #include "bytecode_parser.h"
-#include "parser.h"
-#include "grammar.tab.h"
+// #include "grammar.tab.h"
 #include "lexer.h"
+#include "ast_nodes.h"
+
+extern List* programBlock;
 
 #define EXIT_SUCCESS   0
 #define EXIT_PROG_ERR  1
@@ -63,7 +65,7 @@ int main(int argc, char *argv[]) {
 				use_stdin = true;
 				break;
 			case 'p':
-				return parse_flag = true;
+				parse_flag = true;
 				break;
 #ifndef NDEBUG
 			case 'v':
@@ -83,14 +85,6 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	if (parse_flag) {
-		do {
-			yyparse();
-		} while (!feof(yyin));
-	}
-
-	int val = EXIT_SUCCESS;
-	
 	Cream_vm* vm = cream_vm_create();
 
 	FILE* input;
@@ -115,6 +109,17 @@ int main(int argc, char *argv[]) {
 		input = fopen(argv[optind], "r");
 	}
 
+	if (parse_flag) {
+		yyin = input;
+		do {
+			yyparse();
+		} while (!feof(yyin));
+
+		ast_list_print(programBlock, 0);
+
+		return EXIT_SUCCESS;
+	}
+
 	check(cream_bytecode_parse_stream(input, vm) == 1, "parse failed");
 
 	cream_vm_run(vm);
@@ -125,7 +130,7 @@ int main(int argc, char *argv[]) {
 
 	cream_vm_destroy(vm);
 
-	return val;
+	return EXIT_SUCCESS;
 error:
 	return EXIT_PROG_ERR;
 }
