@@ -142,7 +142,10 @@ bool cream_instr_from_line(char* line, instr** instr_ref) {
 				i++;
 			} else if (cream_char_in_str(line[i], NUM)) {
 				char* str = cream_try_read_int(line, &i);
-				instruction->arg1 = str;
+				int* ptr = malloc(sizeof(int));
+				check_mem(ptr);
+				*ptr = atoi(str);
+				instruction->arg1 = (char*) *ptr;
 				instruction->arg2 = TYPE_INTEGER;
 				debug("push found num: '%s'", str);
 				i++;
@@ -255,16 +258,17 @@ bool cream_bytecode_parse_stream(FILE* input, Cream_vm *vm) {
 
 	// compact the list
 	vm->num_bytecodes = instructions->length;
-	instr* block = malloc(sizeof(instr) * instructions->length);
-	check_mem(block);
-	int i = 0;
-	while (instructions->length > 0) {
-		instr* inst = List_dequeue(instructions);
-		block[i] = *inst;
-		i++;
-	}
+	// instr* block = malloc(sizeof(instr) * instructions->length);
+	// check_mem(block);
+	// int i = 0;
+	// while (instructions->length > 0) {
+	// 	instr* inst = List_dequeue(instructions);
+	// 	block[i] = *inst;
+	// 	i++;
+	// }
 
-	vm->bytecode = block; 
+	vm->bytecode = bytecodes_compress(instructions);
+	check(vm->bytecode != NULL, "Unable to compress instructions");
 
 	List_destroy(instructions);
 

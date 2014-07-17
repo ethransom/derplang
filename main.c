@@ -11,6 +11,7 @@
 // #include "grammar.tab.h"
 #include "lexer.h"
 #include "ast_nodes.h"
+#include "bytecodes.h"
 
 extern List* programBlock;
 
@@ -85,8 +86,6 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	Cream_vm* vm = cream_vm_create();
-
 	FILE* input;
 
 	if (use_stdin) {
@@ -109,6 +108,8 @@ int main(int argc, char *argv[]) {
 		input = fopen(argv[optind], "r");
 	}
 
+	Cream_vm* vm = cream_vm_create();
+
 	if (parse_flag) {
 		yyin = input;
 		do {
@@ -117,10 +118,27 @@ int main(int argc, char *argv[]) {
 
 		ast_list_print(programBlock, 0);
 
-		return EXIT_SUCCESS;
-	}
+		List* out = List_create();
 
-	check(cream_bytecode_parse_stream(input, vm) == 1, "parse failed");
+		check(ast_compile(programBlock, out), "Failed to compile AST");
+
+		printf("bytecodes; %d\n", out->length);
+
+		LIST_FOREACH(out, first, next, cur) {
+			instr* i = cur->data;
+			bytecode_print(i);
+		}
+
+		vm->num_bytecodes = out->length;
+		vm->bytecode = bytecodes_compress(out);
+		check(vm->bytecode != NULL, "Couldn't compress bytecodes");
+
+		// cream_codes_print(val);
+
+		// ast_list_free(programBlock);
+	} else {
+		check(cream_bytecode_parse_stream(input, vm) == 1, "parse failed");
+	}
 
 	cream_vm_run(vm);
 

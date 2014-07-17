@@ -7,6 +7,7 @@
 #include "debug.h"
 #include "vm.h"
 #include "stdlib.h"
+#include "bytecodes.h"
 
 Cream_code_type cream_str2_bytecode(char* str); 
 

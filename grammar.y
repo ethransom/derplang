@@ -8,6 +8,8 @@
 
 #include "ast_nodes.h"
 
+#include "debug.h"
+
 void yyerror(const char *s);
 
 #define $$ = malloc(sizeof(NExpression)) $$ = $$ = malloc(sizeof(NExpression))
@@ -41,7 +43,8 @@ ExprList *programBlock; /* the top level root node of our final AST */
    match our tokens.l lex file. We also define the node type
    they represent.
  */
-%token <string> TIDENTIFIER TINTEGER TDOUBLE
+%token <string> TIDENTIFIER TINTEGER TDOUBLE TSTRING
+%token <token> TKEYWORDIF TKEYWORDFUNCDEF
 %token <token> TCEQ TCNE TCLT TCLE TCGT TCGE TEQUAL
 %token <token> TLPAREN TRPAREN TLBRACE TRBRACE TCOMMA TDOT
 %token <token> TPLUS TMINUS TMUL TDIV
@@ -51,17 +54,17 @@ ExprList *programBlock; /* the top level root node of our final AST */
    we call an ident (defined by union type ident) we are really
    calling an (NIdentifier*). It makes the compiler happy.
  */
-%type <ident> ident
-%type <list> program
+// %type <ident> 
+%type <list> program func_decl_args
 // %type <expr> numeric expr 
 // %type <varvec> func_decl_args
 // %type <exprvec> call_args
 // %type <block> program stmts block
 // %type <stmt> stmt var_assign func_decl
 // %type <stmt> stmt
-%type <expr_list> stmts call_args
+%type <expr_list> stmts call_args block
 // %type <stmts> stmt
-%type <expression> var_assign stmt expr numeric
+%type <expression> var_assign stmt expr literal ident if_structure func_decl
 %type <token> comparison
 
 /* Operator precedence for mathematical operators */
@@ -82,41 +85,41 @@ stmts : stmt { $$ = List_create(); List_push($$, $1); }
       | stmts stmt { List_push($1, $2); }
       ;
 
-stmt : var_assign | expr
+stmt : var_assign | if_structure | func_decl | expr
      ;
 // stmt : var_assign | func_decl
 //      | expr { $$ = new NExpressionStatement(*$1); }
 //      ;
 
-// block : TLBRACE stmts TRBRACE { $$ = $2; }
-//       | TLBRACE TRBRACE { $$ = new NBlock(); }
-//       ;
-
-// var_assign : ident ident { $$ = new NVariableDeclaration(*$1, *$2); }
-         // | ident ident TEQUAL expr { $$ = new NVariableDeclaration(*$1, *$2, $4); }
-         // ;
-var_assign : ident TEQUAL expr { $$ = ast_expr_new(NASSIGNMENT); $$->assignment.name = $1; $$->assignment.val = $3; }
+var_assign : TIDENTIFIER TEQUAL expr { $$ = ast_expr_new(NASSIGNMENT); $$->assignment.name = $1; $$->assignment.val = $3; }
          ;
-        
-// func_decl : ident ident TLPAREN func_decl_args TRPAREN block 
-//             { $$ = new NFunctionDeclaration(*$1, *$2, *$4, *$6); delete $4; }
-//           ;
-    
-// func_decl_args : /*blank*/  { $$ = new VariableList(); }
-//           | var_assign { $$ = new VariableList(); $$->push_back($<var_assign>1); }
-//           | func_decl_args TCOMMA var_assign { $1->push_back($<var_assign>3); }
-//           ;
 
-ident : TIDENTIFIER { $$ = /*new NIdentifier(*$1); delete $1;*/ $1; }
+block : TLBRACE stmts TRBRACE { $$ = $2; }
+      | TLBRACE TRBRACE { $$ = List_create(); }
       ;
 
-numeric : TINTEGER { $$ = ast_expr_new(NINTEGER); $$->integer = atol($1); /*delete $1;*/ }
-        | TDOUBLE { $$ = ast_expr_new(NDOUBLE); $$->tdouble = atof($1); /*delete $1;*/ }
+if_structure : TKEYWORDIF expr block  { $$ = ast_expr_new(NIFSTRUCTURE); $$->if_structure.expr = $2; $$->if_structure.block = $3; }
+        
+func_decl :  TKEYWORDFUNCDEF TIDENTIFIER TLPAREN func_decl_args TRPAREN block 
+            { $$ = ast_expr_new(NFUNCDEF); $$->func_def.name = $2; $$->func_def.arg_list = $4; $$->func_def.block = $6; /*delete $4;*/ }
+          ;
+    
+func_decl_args : /*blank*/  { $$ = List_create(); }
+          | TIDENTIFIER { $$ = List_create(); List_push($$, $1); }
+          | func_decl_args TCOMMA TIDENTIFIER { List_push($1, $3); }
+          ;
+
+ident : TIDENTIFIER { debug("casting ident into expr"); $$ = ast_expr_new(NLOOKUP); $$->lookup.name = $1; /*delete $1;*/ /*$1;*/ }
+      ;
+
+literal : TINTEGER { $$ = ast_expr_new(NINTEGER); $$->integer = atol($1); free($1); }
+        | TDOUBLE  { $$ = ast_expr_new(NDOUBLE);  $$->tdouble = atof($1); free($1); }
+        | TSTRING  { $$ = ast_expr_new(NSTRING);  $$->string = $1; }
         ;
     
-expr : ident TLPAREN call_args TRPAREN { $$ = ast_expr_new(NCALL); $$->call.name = $1; $$->call.args = $3; /*delete $3;*/ }
-     | ident { $<ident>$ = $1; }
-     | numeric
+expr : TIDENTIFIER TLPAREN call_args TRPAREN { $$ = ast_expr_new(NCALL); $$->call.name = $1; $$->call.args = $3; /*delete $3;*/ }
+     | ident /*{ $$ = ast_expr_new(NLOOKUP); $$->lookup.name = $1; }*/
+     | literal
      | expr comparison expr { $$ = ast_expr_new(NBINARYOP);
      						  $$->binary_op.left  = $1;
      						  $$->binary_op.op 	  = $2;

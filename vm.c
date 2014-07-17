@@ -2,21 +2,7 @@
 
 #include "vm.h"
 
-// must match definition of Cream_code_type in 'vm.h'
-char Cream_code_names[10][16] = {
-    "NULL",
-    "PUSH",
-    "CALL",
-    "REGISTER",
-    "PUSH_LOOKUP",
-    "ASSIGN",
-    "RET",
-    "JUMP_IF_FALSE",
-    "JUMP",
-    "REPEAT"
-};
-
-
+#include "bytecodes.h"
 
 Cream_vm* cream_vm_create() {
 	// puts("cream obj created");
@@ -107,10 +93,6 @@ bool cream_run_native(Cream_vm* vm, char* name, int argc) {
 	return false;
 }
 
-const char* cream_code_to_str(Cream_code_type* code) {
-	return Cream_code_names[(int) *code];
-}
-
 // void cream_vm_load_file(char* filename) {
 // 
 // }
@@ -125,7 +107,7 @@ void cream_vm_run(Cream_vm *vm) {
 		int arg2 = (vm->bytecode)[pointer].arg2;
 
 		debug("code: %s @ %d", 
-			cream_code_to_str(&((vm->bytecode)[pointer]).code),
+			code_type_to_str(&((vm->bytecode)[pointer]).code),
 			pointer
 		);
 
@@ -140,12 +122,8 @@ void cream_vm_run(Cream_vm *vm) {
 					case TYPE_STRING:
 						data->data = arg1;
 						break;
-					case TYPE_INTEGER: {
-						int* ptr = malloc(sizeof(int));
-						check_mem(ptr);
-						*ptr = atoi(arg1);
-						data->data = (void*) ptr;
-					}
+					case TYPE_INTEGER:
+						data->data = arg1;
 						break;
 					case TYPE_FLOAT:
 						// ...
@@ -158,6 +136,13 @@ void cream_vm_run(Cream_vm *vm) {
 						break;
 				}
 
+				List_push(vm->stack, data);
+			}
+				break;
+			case CODE_PUSH_INT: {
+				Cream_obj* data = malloc(sizeof(Cream_obj));
+				check_mem(data);
+				data->data = &arg2;
 				List_push(vm->stack, data);
 			}
 				break;
@@ -231,7 +216,7 @@ void cream_vm_run(Cream_vm *vm) {
 				break;
 			default:
 				log_warn("Unknown code: %s (%d)", 
-					cream_code_to_str(&(vm->bytecode)[pointer].code), 
+					code_type_to_str(&(vm->bytecode)[pointer].code), 
 					(vm->bytecode)[pointer].code
 				);
 				break;

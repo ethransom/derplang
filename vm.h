@@ -17,6 +17,8 @@
 typedef enum {
     CODE_NULL, // dummy code, does nothing
     CODE_PUSH,
+    CODE_PUSH_INT,
+    CODE_PUSH_STR,
     CODE_CALL, 
     CODE_REGISTER,
     CODE_PUSH_LOOKUP,
@@ -68,8 +70,6 @@ void cream_vm_destroy(Cream_vm *obj);
 void cream_add_native(Cream_vm* vm, char* name, Cream_native_fn fn);
 
 bool cream_run_native(Cream_vm* vm, char* name, int argc);
-
-const char* cream_code_to_str(Cream_code_type* code);
 
 // void cream_vm_load_file(char* filename);
 

@@ -12,6 +12,9 @@ List *List_create()
 
   list->length = 0;
 
+  list->first = NULL;
+  list->last = NULL;
+
   return list;
 }
 
@@ -45,6 +48,7 @@ void List_push(List *list, void *data) {
   assert(node != NULL);
 
   node->data = data;
+  node->next = NULL;
 
   // list is empty
   if (list->length == 0) {
