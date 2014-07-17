@@ -1,2 +1,0 @@
-push "Hello, World!"
-call :println, 1
