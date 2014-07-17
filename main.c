@@ -28,7 +28,7 @@ void print_usage (FILE* stream, char* program_name) {
 	fprintf (stream,
 		"  -h  --help             Display this usage information.\n"
 		"  -s  --stdin            Use stdin as the input stream.\n"
-    "  -p  --parse            Use the experimental native parser.\n"
+    "  -b  --bytecode         [DISABLED] Parse a bytecodes file.\n"
 #ifndef NDEBUG
 		"  -v  --verbose          Print verbose messages.\n"
 #endif
@@ -41,7 +41,7 @@ void print_usage (FILE* stream, char* program_name) {
 const struct option long_options[] = {
 	{"help",    0, NULL, 'h'},
 	{"stdin",   0, NULL, 's'},
-	{"parse",   0, NULL, 'p'},
+	{"bytecode",   0, NULL, 'b'},
 #ifndef NDEBUG
 	{"verbose", 0, NULL, 'v'},
 #endif
@@ -49,12 +49,12 @@ const struct option long_options[] = {
 };
 
 int main(int argc, char *argv[]) {
-	bool parse_flag = false;
+	bool bytecode_flag = false;
 	bool use_stdin = false;
 	debug_flag = 0;
 
 	char ch;
-	while ((ch = getopt_long(argc, argv, "hsvp", long_options, NULL)) != -1) {
+	while ((ch = getopt_long(argc, argv, "hsvb", long_options, NULL)) != -1) {
 		switch (ch) {
 			case 'h':
 				print_usage(stderr, argv[0]);
@@ -65,8 +65,8 @@ int main(int argc, char *argv[]) {
 			case 's':
 				use_stdin = true;
 				break;
-			case 'p':
-				parse_flag = true;
+			case 'b':
+				bytecode_flag = true;
 				break;
 #ifndef NDEBUG
 			case 'v':
@@ -110,7 +110,11 @@ int main(int argc, char *argv[]) {
 
 	Cream_vm* vm = cream_vm_create();
 
-	if (parse_flag) {
+	if (bytecode_flag) {
+	    fprintf(stderr, "Parsing from bytecodes is currently disabled\n");
+	    return EXIT_BAD_ARGS;
+		// check(cream_bytecode_parse_stream(input, vm) == 1, "parse failed");
+	} else {
 		yyin = input;
 		do {
 			yyparse();
@@ -136,8 +140,6 @@ int main(int argc, char *argv[]) {
 		// cream_codes_print(val);
 
 		// ast_list_free(programBlock);
-	} else {
-		check(cream_bytecode_parse_stream(input, vm) == 1, "parse failed");
 	}
 
 	cream_vm_run(vm);
