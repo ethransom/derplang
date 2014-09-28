@@ -24,6 +24,7 @@ typedef struct {
 		int int_val;
 		double float_val;
 		char* str_val;
+		bool bool_val;
 	};
 } Cream_obj;
 

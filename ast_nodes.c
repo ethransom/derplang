@@ -217,7 +217,17 @@ bool ast_expr_compile(NExpression* expr, List* output) {
 			CODE(CODE_PUSH_LOOKUP, expr->lookup.name, 0, 0.0);
 			break;
 		case NIFSTRUCTURE:
-			sentinel("NIFSTRUCTURE not implemented!")
+			ast_expr_compile(expr->if_structure.expr, output);
+
+			CODE(CODE_JUMP_IF_FALSE, NULL, 0, 0.0);
+			// keep a pointer to update once we know the body length
+			instr* jump = output->last->data;
+
+			int len_before_if = output->length;
+
+			ast_list_compile(expr->if_structure.block, output);
+
+			jump->arg2 = output->length - len_before_if;
 			break;
 		case NFUNCDEF:
 			CODE(CODE_REGISTER, expr->func_def.name, 0, 0.0);

@@ -50,6 +50,19 @@ typedef enum {
     CODE_REPEAT
 } Cream_code_type;
 
+typedef enum {
+  OP_ADD,
+  OP_SUB,
+  OP_MUL,
+  OP_DIV,
+  OP_CMP_EQ,
+  OP_CMP_NEQ,
+  OP_CMP_LT,
+  OP_CMP_LT_EQ,
+  OP_CMP_GT,
+  OP_CMP_GT_EQ,
+} Vm_arithmetic_optype;
+
 // TODO: move to bytecodes.h
 typedef struct {
   Cream_code_type code;

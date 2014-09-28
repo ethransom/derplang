@@ -20,6 +20,61 @@ error:
 	return NULL;
 }
 
+/*
+ * Perform the arithmetic operation indicated by optype
+ * Pushes the result of the operation to the stack
+*/
+// TODO: potentially inline?
+static void vm_arithmetic(Cream_vm* vm, Vm_arithmetic_optype optype) {
+	Cream_obj* right = List_pop(vm->stack);
+	Cream_obj* left = List_pop(vm->stack);
+	check(right->type == TYPE_INTEGER, "Expected integer");
+	check(left->type == TYPE_INTEGER, "Expected integer");
+
+	int r = right->int_val;
+	int l = left->int_val;
+
+	Cream_obj* result = malloc(sizeof(Cream_obj));
+	check_mem(result);
+
+	if (optype == OP_ADD || optype == OP_SUB ||
+		optype == OP_MUL || optype == OP_DIV) {
+
+		debug("performing arithmetic operation on %d and %d", l, r);
+		result->type = TYPE_INTEGER;
+	} else {
+		debug("performing comparison operation on %d and %d", l, r);
+		result->type = TYPE_BOOLEAN;
+	}
+
+	switch (optype) {
+		case OP_ADD:		result->int_val = l + r; break;
+		case OP_SUB:		result->int_val = l - r; break;
+		case OP_MUL:		result->int_val = l * r; break;
+		case OP_DIV:		result->int_val = l / r; break;
+
+		case OP_CMP_EQ:		result->bool_val = (l == r); break;
+		case OP_CMP_NEQ:	result->bool_val = (l != r); break;
+		case OP_CMP_LT:		result->bool_val = (l <  r); break;
+		case OP_CMP_LT_EQ:	result->bool_val = (l <= r); break;
+		case OP_CMP_GT:		result->bool_val = (l >  r); break;
+		case OP_CMP_GT_EQ:	result->bool_val = (l >= r); break;
+
+		default: sentinel("encountered unknown optype");
+	}
+
+	debug("result of operation: b: %d i: %d", result->bool_val, result->int_val);
+
+	List_push(vm->stack, result);
+	// free(right);
+	// free(left);
+
+	return;
+
+error:
+	vm->err = true;
+}
+
 // =========== PUSH HELPERS ========== //
 // push various types to the stack
 // TODO: move `Cream_obj` creation to `object.c` to allow for memory mgmt.
@@ -165,34 +220,18 @@ void cream_vm_run(Cream_vm *vm) {
 				break;
 
 			// ================== MATHEMATICAL OPERATIONS =================== //
-			case CODE_ADD:
-			case CODE_SUB:
-			case CODE_MUL:
-			case CODE_DIV: {
-				Cream_obj* right = List_pop(vm->stack);
-				Cream_obj* left = List_pop(vm->stack);
-				check(right->type == TYPE_INTEGER, "Expected integer");
-				check(left->type == TYPE_INTEGER, "Expected integer");
-				Cream_obj* result = malloc(sizeof(Cream_obj));
-				check_mem(result);
-				result->type = TYPE_INTEGER;
-
-				result->int_val = left->int_val + right->int_val;
-				List_push(vm->stack, result);
-				free(right);
-				free(left);
-			}
-				break;
+			case CODE_ADD:	vm_arithmetic(vm, OP_ADD); break;
+			case CODE_SUB:	vm_arithmetic(vm, OP_SUB); break;
+			case CODE_MUL:	vm_arithmetic(vm, OP_MUL); break;
+			case CODE_DIV:	vm_arithmetic(vm, OP_DIV); break;
 
 			// ================== COMPARISON OPERATIONS =================== //
-			case CODE_CMP_EQ:
-			case CODE_CMP_NEQ:
-			case CODE_CMP_LT:
-			case CODE_CMP_LT_EQ:
-			case CODE_CMP_GT:
-			case CODE_CMP_GT_EQ:
-				sentinel("Comparisions not implemented");
-				break;
+			case CODE_CMP_EQ:		vm_arithmetic(vm, OP_CMP_EQ); break;
+			case CODE_CMP_NEQ:		vm_arithmetic(vm, OP_CMP_NEQ); break;
+			case CODE_CMP_LT:		vm_arithmetic(vm, OP_CMP_LT); break;
+			case CODE_CMP_LT_EQ:	vm_arithmetic(vm, OP_CMP_LT_EQ); break;
+			case CODE_CMP_GT:		vm_arithmetic(vm, OP_CMP_GT); break;
+			case CODE_CMP_GT_EQ:	vm_arithmetic(vm, OP_CMP_GT_EQ); break;
 
 			case CODE_CALL: {
 				char* identifier = bytecode->arg1;
@@ -250,7 +289,22 @@ void cream_vm_run(Cream_vm *vm) {
 				free(last_frame);
 			}
 				break;
-			// case CODE_JUMP_IF_FALSE:
+			case CODE_JUMP_IF_FALSE: {
+				Cream_obj* top = List_pop(vm->stack);
+				if (top->type != TYPE_BOOLEAN) {
+					log_err("don't know how to evaluate truthyness of non-boolean");
+					vm->err = true;
+					break;
+				}
+
+				if (top->bool_val) {
+					debug("found cond to be truthy, continuing");
+				} else {
+					int num = bytecode->arg2;
+					debug("found cond to be falsy, jumping %d", num);
+					pointer += num;
+				}
+			}
 				break;
 			case CODE_JUMP: {
 				int num = atoi(bytecode->arg1);
@@ -263,10 +317,11 @@ void cream_vm_run(Cream_vm *vm) {
 			case CODE_NULL:
 				break;
 			default:
-				log_warn("Unknown code: %s (%d)",
+				log_err("Unknown code: %s (%d)",
 					code_type_to_str(bytecode->code),
 					bytecode->code
 				);
+				vm->err = true;
 				break;
 		}
 
