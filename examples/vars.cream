@@ -1,0 +1,7 @@
+number = 1234
+float = 3.14159
+string = "Hello, World!"
+
+println(number)
+println(float, "<- float, not integer")
+println(string)

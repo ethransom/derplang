@@ -1,0 +1,7 @@
+fn printNum(number) {
+  println(number)
+}
+
+print("2 + 2 = ")
+printNum(2)
+println()

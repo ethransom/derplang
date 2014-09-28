@@ -7,7 +7,21 @@ char Cream_code_names[][16] = {
     "NULL",
     "PUSH",
     "PUSH_INT",
+    "PUSH_FLOAT",
     "PUSH_STR",
+
+    // mathematical and logical operations
+    "ADD",
+    "SUB",
+    "MUL",
+    "DIV",
+    "CMP_EQ",
+    "CMP_NEQ",
+    "CMP_LT",
+    "CMP_LT_EQ",
+    "CMP_GT",
+    "CMP_GT_EQ",
+
     "CALL",
     "REGISTER",
     "PUSH_LOOKUP",
@@ -18,12 +32,12 @@ char Cream_code_names[][16] = {
     "REPEAT"
 };
 
-const char* code_type_to_str(Cream_code_type* code) {
-	return Cream_code_names[(int) *code];
+const char* code_type_to_str(Cream_code_type code) {
+	return Cream_code_names[(int) code];
 }
 
 void bytecode_print(instr* code) {
-	printf("%s", code_type_to_str(&code->code));
+	printf("%s", code_type_to_str(code->code));
 	if (code->arg1 != NULL)
 		printf(" '%s'", code->arg1);
 	printf(" %d\n", code->arg2);
@@ -31,7 +45,7 @@ void bytecode_print(instr* code) {
 
 void bytecode_vec_print(instr* instrv, int instrc) {
 	for (int i = 0; i < instrc; i++) {
-		bytecode_print(&instrv[instrc]);
+		bytecode_print(&instrv[i]);
 	}
 }
 

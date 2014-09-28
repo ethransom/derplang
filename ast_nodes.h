@@ -1,9 +1,11 @@
 #pragma once
 
+#include <stdbool.h>
+
 #include "list.h"
 #include "vm.h"
 
-#define MAKE_EXPR 
+#define MAKE_EXPR
 
 typedef List ExprList;
 
@@ -91,6 +93,6 @@ void ast_expr_free(NExpression* expr);
 
 bool ast_compile(ExprList* root, List* bytecodes);
 
-void ast_list_compile(ExprList* list, List* output);
+bool ast_list_compile(ExprList* list, List* output);
 
-void ast_expr_compile(NExpression* expr, List* output);
+bool ast_expr_compile(NExpression* expr, List* output);

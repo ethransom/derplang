@@ -1,0 +1,9 @@
+fn printNum(number) {
+  println(number) # comment again
+}
+
+# popcorn chicken
+
+print("2 + 2 = ") # I is a comment
+printNum(2)
+println()

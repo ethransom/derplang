@@ -1,0 +1,13 @@
+fn echo(foo) {
+	ret foo
+}
+
+fn exitEarly() {
+	ret
+	println("SHOULDN'T HAPPEN")
+}
+
+
+echo()
+exitEarly()
+

@@ -19,16 +19,20 @@ void cream_stdlib_print(Cream_vm* vm, int argc) {
 
 		switch (data->type) {
 			case TYPE_STRING:
-				printf("%s", (char*) data->data);
+				printf("%s", data->str_val);
 				break;
 			case TYPE_INTEGER:
-				printf("%d", *((int*) data->data));
+				printf("%d", data->int_val);
 				break;
 			case TYPE_FLOAT:
-				// printf("%f", (double) data->data);
+				printf("%f", (double) data->float_val);
 				break;
-			case TYPE_BOOLEAN:
-				printf("%s", (*((bool*) data->data) == 0 ? "true" : "false"));
+			// case TYPE_BOOLEAN:
+				// printf("%s", (*((bool*) data->data) == 0 ? "true" : "false"));
+				// break;
+			// case TYPE_BOOLEAN
+			default:
+				sentinel("Tried to print unknown type");
 				break;
 		}
 

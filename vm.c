@@ -4,6 +4,46 @@
 
 #include "bytecodes.h"
 
+//============================== HELPER FUNCTIONS ==============================
+// marked as static and not forward-declared in the header so as to be private
+
+//
+static Stack_frame* vm_add_stack_frame(Cream_vm* vm) {
+	Stack_frame* frame = malloc(sizeof(Stack_frame));
+	check_mem(frame);
+	Map* symbol_table = Map_create();
+	frame->symbol_table = symbol_table;
+	List_push(vm->call_stack, frame);
+	return frame;
+error:
+	log_err("OUT OF MEMR");
+	return NULL;
+}
+
+// =========== PUSH HELPERS ========== //
+// push various types to the stack
+// TODO: move `Cream_obj` creation to `object.c` to allow for memory mgmt.
+// returns true if successful, false if not
+static void vm_push_int(Cream_vm *vm, int i) {
+	Cream_obj* data = cream_obj_create();
+	data->type = TYPE_INTEGER;
+	data->int_val = i;
+	List_push(vm->stack, data);
+}
+static void vm_push_float(Cream_vm *vm, float f) {
+	Cream_obj* data = cream_obj_create();
+	data->type = TYPE_FLOAT;
+	data->float_val = f;
+	List_push(vm->stack, data);
+}
+static void vm_push_str(Cream_vm *vm, char* s) {
+	Cream_obj* data = cream_obj_create();
+	data->type = TYPE_STRING;
+	data->str_val = s;
+	List_push(vm->stack, data);
+}
+// static bool vm_push_bool(Cream_vm *vm, bool b);
+
 Cream_vm* cream_vm_create() {
 	// puts("cream obj created");
 	Cream_vm *vm = malloc(sizeof(Cream_vm));
@@ -14,6 +54,7 @@ Cream_vm* cream_vm_create() {
 
 	vm->call_stack = List_create();
 	check_mem(vm->call_stack);
+	check_mem(vm_add_stack_frame(vm));
 
 	vm->func_map = Map_create();
 	check_mem(vm->func_map);
@@ -80,6 +121,7 @@ error:
 }
 
 bool cream_run_native(Cream_vm* vm, char* name, int argc) {
+	check(name != NULL, "Given NULL as a name!");
 	debug("Searching for '%s'...", name);
 	LIST_FOREACH(vm->std_lib, first, next, cur) {
 		Cream_native* native = cur->data;
@@ -90,77 +132,79 @@ bool cream_run_native(Cream_vm* vm, char* name, int argc) {
 		}
 	}
 
+error:
 	return false;
 }
 
-// void cream_vm_load_file(char* filename) {
-// 
-// }
-
 void cream_vm_run(Cream_vm *vm) {
 	debug("beginning execution...");
-	size_t num_bytecodes = vm->num_bytecodes;
-	debug("%d bytecodes", num_bytecodes);
-	for (unsigned int pointer = 0; pointer < num_bytecodes; pointer++) {
-		// instr* in = (vm->block)[pointer]
-		char* arg1 = (vm->bytecode)[pointer].arg1;
-		int arg2 = (vm->bytecode)[pointer].arg2;
 
-		debug("code: %s @ %d", 
-			code_type_to_str(&((vm->bytecode)[pointer]).code),
+	size_t num_bytecodes = vm->num_bytecodes;
+	debug("%zu bytecodes", num_bytecodes);
+
+	for (unsigned int pointer = 0; pointer < num_bytecodes; pointer++) {
+		instr* bytecode = vm->bytecode + pointer;
+
+		debug("code: %s @ %d",
+			code_type_to_str(bytecode->code),
 			pointer
 		);
 
-		switch ((vm->bytecode)[pointer].code) {
-			case CODE_PUSH: {
-				debug("Evaluating push");
-				Cream_obj* data = malloc(sizeof(Cream_obj));
-				check_mem(data);
+		switch (bytecode->code) {
+			case CODE_PUSH:
+				sentinel("CODE_PUSH is no good!");
+				break;
+			case CODE_PUSH_INT:
+				vm_push_int(vm, bytecode->arg2);
+				break;
+			case CODE_PUSH_FLOAT:
+				vm_push_float(vm, bytecode->float_val);
+				break;
+			case CODE_PUSH_STR:
+				vm_push_str(vm, bytecode->arg1);
+				break;
 
-				data->type = (int) arg2;
-				switch (data->type) {
-					case TYPE_STRING:
-						data->data = arg1;
-						break;
-					case TYPE_INTEGER:
-						data->data = arg1;
-						break;
-					case TYPE_FLOAT:
-						// ...
-						break;
-					case TYPE_BOOLEAN:
-						// ...
-						break;
-					default:
-						sentinel("Unknown 'Cream_data' type!");
-						break;
-				}
+			// ================== MATHEMATICAL OPERATIONS =================== //
+			case CODE_ADD:
+			case CODE_SUB:
+			case CODE_MUL:
+			case CODE_DIV: {
+				Cream_obj* right = List_pop(vm->stack);
+				Cream_obj* left = List_pop(vm->stack);
+				check(right->type == TYPE_INTEGER, "Expected integer");
+				check(left->type == TYPE_INTEGER, "Expected integer");
+				Cream_obj* result = malloc(sizeof(Cream_obj));
+				check_mem(result);
+				result->type = TYPE_INTEGER;
 
-				List_push(vm->stack, data);
+				result->int_val = left->int_val + right->int_val;
+				List_push(vm->stack, result);
+				free(right);
+				free(left);
 			}
 				break;
-			case CODE_PUSH_INT: {
-				Cream_obj* data = malloc(sizeof(Cream_obj));
-				check_mem(data);
-				data->data = &arg2;
-				List_push(vm->stack, data);
-			}
+
+			// ================== COMPARISON OPERATIONS =================== //
+			case CODE_CMP_EQ:
+			case CODE_CMP_NEQ:
+			case CODE_CMP_LT:
+			case CODE_CMP_LT_EQ:
+			case CODE_CMP_GT:
+			case CODE_CMP_GT_EQ:
+				sentinel("Comparisions not implemented");
 				break;
+
 			case CODE_CALL: {
-				char* identifier = arg1;
-				int argc = arg2;
+				char* identifier = bytecode->arg1;
+				int argc = bytecode->arg2;
 
 				debug("'%d' arg call to '%s'", argc, identifier);
 
 				// check defined functions
 				int addr = (int) Map_get(vm->func_map, identifier);
 				if (addr != -1) {
-					Stack_frame* frame = malloc(sizeof(Stack_frame));
-					check_mem(frame);
-					Map* symbol_table = Map_create(); 
-					frame->symbol_table = symbol_table;
+					Stack_frame* frame = vm_add_stack_frame(vm);
 					frame->return_addr = pointer;
-					List_push(vm->call_stack, frame);
 
 					debug("jumping to '%s' @ %d", identifier, addr);
 					pointer = addr;
@@ -169,28 +213,32 @@ void cream_vm_run(Cream_vm *vm) {
 
 				// check stdlib functions
 				bool success = cream_run_native(vm, identifier, argc);
-				
+
 				check(success != false, "unknown function: '%s'", identifier);
 			}
 				break;
 			case CODE_REGISTER: {
-				debug("Registered function '%s' @ %d", arg1, pointer);
-				Map_set(vm->func_map, arg1, (void*) pointer);
-				pointer += arg2;
+				debug("Registered function '%s' @ %d", bytecode->arg1, pointer);
+				Map_set(vm->func_map, bytecode->arg1, (void*) pointer);
+				pointer += bytecode->arg2;
 			}
 				break;
 			case CODE_PUSH_LOOKUP: {
-				debug("pushing contents of '%s' to stack", arg1);
+				debug("pushing contents of '%s' to stack", bytecode->arg1);
 				Stack_frame* frame = (Stack_frame*) vm->call_stack->last->data;
-				Cream_obj* data = Map_get(frame->symbol_table, arg1);
+				Cream_obj* data = Map_get(frame->symbol_table, bytecode->arg1);
+				if (data == frame->symbol_table->not_found_val) {
+					log_err("undefined variable '%s'", bytecode->arg1);
+					vm->err = true;
+				}
 				List_push(vm->stack, data);
 			}
 				break;
 			case CODE_ASSIGN: {
-				debug("assigning to %s", arg1);
+				debug("assigning to %s", bytecode->arg1);
 				Cream_obj* data = List_pop(vm->stack);
 				Stack_frame* frame = (Stack_frame*) vm->call_stack->last->data;
-				Map_set(frame->symbol_table, arg1, data);
+				Map_set(frame->symbol_table, bytecode->arg1, data);
 			}
 				break;
 			case CODE_RET: {
@@ -205,7 +253,7 @@ void cream_vm_run(Cream_vm *vm) {
 			// case CODE_JUMP_IF_FALSE:
 				break;
 			case CODE_JUMP: {
-				int num = atoi(arg1);
+				int num = atoi(bytecode->arg1);
 				debug("jumping %d", num);
 				pointer += num;
 			}
@@ -215,9 +263,9 @@ void cream_vm_run(Cream_vm *vm) {
 			case CODE_NULL:
 				break;
 			default:
-				log_warn("Unknown code: %s (%d)", 
-					code_type_to_str(&(vm->bytecode)[pointer].code), 
-					(vm->bytecode)[pointer].code
+				log_warn("Unknown code: %s (%d)",
+					code_type_to_str(bytecode->code),
+					bytecode->code
 				);
 				break;
 		}

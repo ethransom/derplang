@@ -1,0 +1,18 @@
+# can't confuse execution
+yolo = "your mom!"
+
+# standalone expressions
+"Forever alone"
+
+123 345 yolo
+
+fn stuff() # oh noes!
+{
+  "I like you. ;)"
+}
+
+fn # oh double noes!
+moarstuff()
+{
+  # ALL the newlines
+}

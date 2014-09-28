@@ -26,9 +26,10 @@ extern int debug_flag;
 void print_usage (FILE* stream, char* program_name) {
 	fprintf (stream, "Usage:  %s INPUTFILES [options]\n", program_name);
 	fprintf (stream,
-		"  -h  --help             Display this usage information.\n"
-		"  -s  --stdin            Use stdin as the input stream.\n"
-    "  -b  --bytecode         [DISABLED] Parse a bytecodes file.\n"
+		"  -h  --help             Display this usage information\n"
+		"  -s  --stdin            Use stdin as the input stream\n"
+	    "  -b  --bytecode         Print the bytecode representation and exit\n"
+	    "  -t  --tree             Print the Abstract Syntax Tree and exit\n"
 #ifndef NDEBUG
 		"  -v  --verbose          Print verbose messages.\n"
 #endif
@@ -39,22 +40,27 @@ void print_usage (FILE* stream, char* program_name) {
 }
 
 const struct option long_options[] = {
-	{"help",    0, NULL, 'h'},
-	{"stdin",   0, NULL, 's'},
-	{"bytecode",   0, NULL, 'b'},
+	{"help",     0, NULL, 'h'},
+	{"stdin",    0, NULL, 's'},
+	{"bytecode", 0, NULL, 'b'},
+	{"tree",     0, NULL, 't'},
 #ifndef NDEBUG
-	{"verbose", 0, NULL, 'v'},
+	{"verbose",  0, NULL, 'v'},
 #endif
-	{NULL,      0, NULL, 0  }
+	{NULL,       0, NULL, 0  }
 };
 
+/*
+ * Program entry point. Parse arguments, then handle highest-level control flow.
+*/
 int main(int argc, char *argv[]) {
 	bool bytecode_flag = false;
+	bool tree_flag = false;
 	bool use_stdin = false;
 	debug_flag = 0;
 
 	char ch;
-	while ((ch = getopt_long(argc, argv, "hsvb", long_options, NULL)) != -1) {
+	while ((ch = getopt_long(argc, argv, "hsbtv", long_options, NULL)) != -1) {
 		switch (ch) {
 			case 'h':
 				print_usage(stderr, argv[0]);
@@ -67,6 +73,9 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'b':
 				bytecode_flag = true;
+				break;
+			case 't':
+				tree_flag = true;
 				break;
 #ifndef NDEBUG
 			case 'v':
@@ -110,43 +119,32 @@ int main(int argc, char *argv[]) {
 
 	Cream_vm* vm = cream_vm_create();
 
-	if (bytecode_flag) {
-	    fprintf(stderr, "Parsing from bytecodes is currently disabled\n");
-	    return EXIT_BAD_ARGS;
-		// check(cream_bytecode_parse_stream(input, vm) == 1, "parse failed");
-	} else {
-		yyin = input;
-		do {
-			yyparse();
-		} while (!feof(yyin));
+	yyin = input;
+	do {
+		yyparse();
+	} while (!feof(yyin));
 
+	if (tree_flag) {
+		debug("Printing AST...");
 		ast_list_print(programBlock, 0);
+		return EXIT_SUCCESS;
+	}
 
-		List* out = List_create();
+	List* out = List_create();
 
-		check(ast_compile(programBlock, out), "Failed to compile AST");
+	check(ast_compile(programBlock, out), "Failed to compile AST");
 
-		printf("bytecodes; %d\n", out->length);
+	vm->num_bytecodes = out->length;
+	vm->bytecode = bytecodes_compress(out);
+	check(vm->bytecode != NULL, "Couldn't compress bytecodes");
 
-		LIST_FOREACH(out, first, next, cur) {
-			instr* i = cur->data;
-			bytecode_print(i);
-		}
-
-		vm->num_bytecodes = out->length;
-		vm->bytecode = bytecodes_compress(out);
-		check(vm->bytecode != NULL, "Couldn't compress bytecodes");
-
-		// cream_codes_print(val);
-
-		// ast_list_free(programBlock);
+	if (bytecode_flag) {
+		debug("Printing bytecodes...");
+		bytecode_vec_print(vm->bytecode, vm->num_bytecodes);
+		return EXIT_SUCCESS;
 	}
 
 	cream_vm_run(vm);
-
-	// puts("main is dumping codes: ");
-	// for (int j = 0; j < vm->num_bytecodes; j++)
-		// printf("code: %d\n", ((vm->bytecode)[j]).code);
 
 	cream_vm_destroy(vm);
 

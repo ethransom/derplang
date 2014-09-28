@@ -6,18 +6,24 @@
 // GENERIC Cream value
 typedef enum {
 	TYPE_OBJECT,
-	TYPE_STRING,
 	TYPE_INTEGER,
 	TYPE_FLOAT,
+	TYPE_STRING,
 	TYPE_BOOLEAN
 } Cream_data_type;
 
 typedef struct {
 	Cream_data_type type;
+	unsigned int ref_count;
 	unsigned char flags; // first slot: frozen
 	union {
-		void* klass; // unused for now
-		void* data; // used if native
+		// unimplemented, will be used as pointer to class object
+		void* klass;
+
+		// 'native' or 'primitive' types
+		int int_val;
+		double float_val;
+		char* str_val;
 	};
 } Cream_obj;
 

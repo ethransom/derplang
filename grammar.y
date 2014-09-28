@@ -54,9 +54,9 @@ ExprList *programBlock; /* the top level root node of our final AST */
    we call an ident (defined by union type ident) we are really
    calling an (NIdentifier*). It makes the compiler happy.
  */
-// %type <ident> 
+// %type <ident>
 %type <list> program func_decl_args
-// %type <expr> numeric expr 
+// %type <expr> numeric expr
 // %type <varvec> func_decl_args
 // %type <exprvec> call_args
 // %type <block> program stmts block
@@ -80,7 +80,7 @@ program : stmts { programBlock = $1; }
 
 // program : var_assign { programBlock = $1; }
         // ;
-        
+
 stmts : stmt { $$ = List_create(); List_push($$, $1); }
       | stmts stmt { List_push($1, $2); }
       ;
@@ -99,11 +99,11 @@ block : TLBRACE stmts TRBRACE { $$ = $2; }
       ;
 
 if_structure : TKEYWORDIF expr block  { $$ = ast_expr_new(NIFSTRUCTURE); $$->if_structure.expr = $2; $$->if_structure.block = $3; }
-        
-func_decl :  TKEYWORDFUNCDEF TIDENTIFIER TLPAREN func_decl_args TRPAREN block 
+
+func_decl :  TKEYWORDFUNCDEF TIDENTIFIER TLPAREN func_decl_args TRPAREN block
             { $$ = ast_expr_new(NFUNCDEF); $$->func_def.name = $2; $$->func_def.arg_list = $4; $$->func_def.block = $6; /*delete $4;*/ }
           ;
-    
+
 func_decl_args : /*blank*/  { $$ = List_create(); }
           | TIDENTIFIER { $$ = List_create(); List_push($$, $1); }
           | func_decl_args TCOMMA TIDENTIFIER { List_push($1, $3); }
@@ -116,7 +116,7 @@ literal : TINTEGER { $$ = ast_expr_new(NINTEGER); $$->integer = atol($1); free($
         | TDOUBLE  { $$ = ast_expr_new(NDOUBLE);  $$->tdouble = atof($1); free($1); }
         | TSTRING  { $$ = ast_expr_new(NSTRING);  $$->string = $1; }
         ;
-    
+
 expr : TIDENTIFIER TLPAREN call_args TRPAREN { $$ = ast_expr_new(NCALL); $$->call.name = $1; $$->call.args = $3; /*delete $3;*/ }
      | ident /*{ $$ = ast_expr_new(NLOOKUP); $$->lookup.name = $1; }*/
      | literal
@@ -126,13 +126,13 @@ expr : TIDENTIFIER TLPAREN call_args TRPAREN { $$ = ast_expr_new(NCALL); $$->cal
      						  $$->binary_op.right = $3; }
      | TLPAREN expr TRPAREN { $$ = $2; }
      ;
-    
+
 call_args : /*blank*/  { $$ = List_create(); }
           | expr { $$ = List_create(); List_push($$, $1); }
           | call_args TCOMMA expr  { List_push($1, $3); }
           ;
 
-comparison : TCEQ | TCNE | TCLT | TCLE | TCGT | TCGE 
+comparison : TCEQ | TCNE | TCLT | TCLE | TCGT | TCGE
            | TPLUS | TMINUS | TMUL | TDIV
            ;
 

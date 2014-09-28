@@ -1,10 +1,14 @@
 # Cream
 
+## Conventions
+
+ * Same-file helpers should always be marked as `static`.
+
 ## Files
 
 ### `main.c`
 
-Main entry point. Argument parsing and file opening. 
+Main entry point. Argument parsing and file opening.
 
 ### `debug.h`
 
@@ -16,7 +20,7 @@ Custom doubly-linked list data structure.
 
 ### `map.c` & `map.h`
 
-Custom hashmap data structure. 
+Custom hashmap data structure.
 
 ### `bytecode_parser.c` & `bytecode_parser.h`
 
@@ -28,7 +32,7 @@ Contains standard library functions--written in C.
 
 ### `utils.c` & `utils.h`
 
-Various utils. 
+Various utils.
 
 ### `vm.c` & `vm.h`
 

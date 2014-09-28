@@ -3,6 +3,8 @@
 
 #include "ast_nodes.h"
 
+#include "grammar.tab.h"
+
 #include "debug.h"
 
 #define treeprintf(NUM, STR, ...) printf("%*s" STR, (NUM) * 4, " ", ##__VA_ARGS__)
@@ -131,32 +133,35 @@ void ast_expr_free(NExpression* expr) {
 bool ast_compile(ExprList* root, List* bytecodes) {
 	// List* bytecodes = List_create();
 
-	ast_list_compile(root, bytecodes);
-
-	return true;
+	return ast_list_compile(root, bytecodes);
 }
 
-void ast_list_compile(ExprList* list, List* output) {
+bool ast_list_compile(ExprList* list, List* output) {
 	LIST_FOREACH(list, first, next, cur) {
 		NExpression* expr = cur->data;
-		ast_expr_compile(expr, output);
+		check(ast_expr_compile(expr, output), "List element couldn't compile");
 	}
+	return true;
+
+error:
+	return false;
 }
 
-instr* _mkbytecode(Cream_code_type type, char* str, int i) {
+instr* _mkbytecode(Cream_code_type type, char* str, int i, double f) {
 	instr* code = malloc(sizeof(instr));
 	check_mem(code);
 	code->code = type;
 	code->arg1 = str;
 	code->arg2 = i;
+	code->float_val = f;
 	return code;
 error:
 	return NULL;
 }
 
-void ast_expr_compile(NExpression* expr, List* output) {
+bool ast_expr_compile(NExpression* expr, List* output) {
 	instr* tmp; // used in the following macro
-#define CODE(TYPE, STR, INT) tmp = _mkbytecode(TYPE, STR, INT); \
+#define CODE(TYPE, STR, INT, FLOAT) tmp = _mkbytecode(TYPE, STR, INT, FLOAT); \
 	check(tmp, "Unable to allocate bytecode"); \
 	List_push(output, (void*) tmp);
 
@@ -164,43 +169,79 @@ void ast_expr_compile(NExpression* expr, List* output) {
 
 	switch(expr->type) {
 		case NASSIGNMENT:
-			ast_expr_compile(expr->assignment.val, output);
-			CODE(CODE_ASSIGN, expr->assignment.name, 0);
+			check(ast_expr_compile(expr->assignment.val, output), "NASSIGNMENT couldn't compile!");
+			CODE(CODE_ASSIGN, expr->assignment.name, 0, 0.0);
 			break;
 		case NINTEGER: {
-			// int* ptr = malloc(sizeof(int));
-			// memcpy(ptr, &expr->integer, sizeof(int));
-			// CODE(CODE_PUSH_INT, (char*) ptr, expr->integer);
-			CODE(CODE_PUSH_INT, NULL, expr->integer);
+			CODE(CODE_PUSH_INT, NULL, expr->integer, 0.0);
 		}
 			break;
-		case NDOUBLE:
+		case NDOUBLE: {
+			CODE(CODE_PUSH_FLOAT, NULL, 0, expr->tdouble);
+		}
 			break;
 		case NSTRING:
-			CODE(CODE_PUSH_STR, expr->string, 0);
+			CODE(CODE_PUSH_STR, expr->string, 0, 0.0);
 			break;
 		case NCALL:
-			ast_list_compile(expr->call.args, output);
-			CODE(CODE_CALL, expr->call.name, expr->call.args->length);
+			check(ast_list_compile(expr->call.args, output), "NCALL couldn't compile!");
+			CODE(CODE_CALL, expr->call.name, expr->call.args->length, 0.0);
 			debug("Added call...");
 			break;
 		case NBINARYOP:
-			// ast_expr_compile(expr->binary_op.left, output);
-			// ast_expr_compile(expr->binary_op.right, output);
+			// postfix, so make sure the operands get pushed first
+			ast_expr_compile(expr->binary_op.left, output);
+			ast_expr_compile(expr->binary_op.right, output);
+
+			// the type of token denotes what type of operation we're performing
+			// we need to generate a bytecode based on this
+			Cream_code_type type = 0;
+			switch (expr->binary_op.op) {
+				case TPLUS:		type = CODE_ADD; break;
+				case TMINUS:	type = CODE_SUB; break;
+				case TMUL:		type = CODE_MUL; break;
+				case TDIV:		type = CODE_DIV; break;
+				case TCEQ:		type = CODE_CMP_EQ; break;
+				case TCNE:		type = CODE_CMP_NEQ; break;
+				case TCLT:		type = CODE_CMP_LT; break;
+				case TCLE:		type = CODE_CMP_LT_EQ; break;
+				case TCGT:		type = CODE_CMP_GT; break;
+				case TCGE:		type = CODE_CMP_GT_EQ; break;
+				default:
+					sentinel("Unknown binary_op type: %d\n", expr->binary_op.op);
+			}
+			CODE(type, NULL, 0, 0.0);
+
 			break;
 		case NLOOKUP:
-			CODE(CODE_PUSH_LOOKUP, expr->lookup.name, 0);
+			CODE(CODE_PUSH_LOOKUP, expr->lookup.name, 0, 0.0);
 			break;
 		case NIFSTRUCTURE:
+			sentinel("NIFSTRUCTURE not implemented!")
 			break;
 		case NFUNCDEF:
+			CODE(CODE_REGISTER, expr->func_def.name, 0, 0.0);
+			// keep a pointer to update the function length when we've finished
+			instr* reg = output->last->data;
+			int start_len = output->length;
+
+			LIST_FOREACH(expr->func_def.arg_list, first, next, cur) {
+				CODE(CODE_ASSIGN, cur->data, 0, 0.0);
+			}
+
+			ast_list_compile(expr->func_def.block, output);
+
+			CODE(CODE_RET, NULL, 0, 0.0);
+
+			reg->arg2 = output->length - start_len;
+			debug("Function %s contains %d bytecodes", reg->arg1, reg->arg2);
 			break;
 		case NNULL:
 		default:
 			sentinel("Tried to compile unknown bytecode: '%d'", expr->type);
 			break;
 	}
-	return;
+	return true;
 error:
-	return;
+	return false;
 }
