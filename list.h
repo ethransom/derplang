@@ -1,3 +1,8 @@
+/*
+ * Implements a doubly-linked list
+ * Found in the book "Learn C the Hard Way" by Zed Shaw
+*/
+
 #ifndef list_h
 #define list_h
 

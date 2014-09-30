@@ -1,3 +1,7 @@
+/*
+ * Implements a basic hashtable
+*/
+
 #ifndef map_h
 #define map_h
 

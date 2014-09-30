@@ -1,0 +1,18 @@
+var = 123
+
+if (var == 123) {
+	println("123 == 123")
+}
+
+if (var == 789) {
+	println("FAIL: 123 == 789")
+}
+
+if (var != 123) {
+	println("FAIL: 123 != 123")
+}
+
+if (var > 42) {
+	println("123 > 42")
+}
+

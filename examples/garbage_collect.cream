@@ -1,0 +1,16 @@
+fn make_crap() {
+	var = 123
+	string = "HAHA, NOOB"
+	string = "Getting up to the heap size of 4!"
+	println(var, string)
+}
+
+fn do_stuffs() {
+	crap = "Crapsicles"
+	make_crap()
+	extra = "I FIT BECAUSE OF GC!!"
+}
+
+do_stuffs()
+do_stuffs()
+do_stuffs()

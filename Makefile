@@ -1,4 +1,4 @@
-FLAGS=-Wall -std=c99
+FLAGS=-Wall -std=gnu99
 
 # PRODUCTION_FLAGS=
 CFLAGS=-g $(FLAGS)

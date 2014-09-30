@@ -11,6 +11,8 @@ Map* Map_create() {
 	Map *map = malloc(sizeof(Map));
 	assert(map != NULL);
 
+	map->first = NULL;
+	map->last = NULL;
 	map->length = 0;
 
 	map->not_found_val = NULL;
@@ -64,6 +66,8 @@ void Map_set(Map *map, char* key, void *data) {
 
 	node->data = data;
 	node->key = key;
+	node->next = NULL;
+	node->prev = NULL;
 
 	// map is empty
 	if (map->length == 0) {

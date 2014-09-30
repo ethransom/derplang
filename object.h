@@ -1,7 +1,14 @@
+/*
+ * Contains code for creating and managing objects
+ * Heap management and the sweep portion of the garbage collecter are here
+*/
+
 #ifndef CREAM_OBJ_H
 #define CREAM_OBJ_H
 
 #include <stdbool.h>
+
+#include "vm.h"
 
 // GENERIC Cream value
 typedef enum {
@@ -14,7 +21,7 @@ typedef enum {
 
 typedef struct {
 	Cream_data_type type;
-	unsigned int ref_count;
+	bool marked; // good ol' mark and sweep
 	unsigned char flags; // first slot: frozen
 	union {
 		// unimplemented, will be used as pointer to class object
@@ -33,10 +40,14 @@ typedef struct {
 #define FLAG_FROZEN (1 << 0)
 #define OBJ_IS_FROZEN(obj) (obj->flags & FLAG_FROZEN)
 
-Cream_obj* cream_obj_create();
+void object_init(Cream_obj* object);
+
+Cream_obj* object_create();
+
+void object_sweep();
 
 void cream_obj_freeze(Cream_obj *obj);
 
-void cream_obj_destroy(Cream_obj *obj);
+void object_destroy(Cream_obj *obj);
 
 #endif

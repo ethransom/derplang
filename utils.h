@@ -1,3 +1,10 @@
+/*
+ * Some basic utility functions
+ * Only used by the bytecode parser
+ *
+ * If the bytecode parsing function is removed, remove this as well
+*/
+
 #ifndef CREAM_UTILS_H
 #define CREAM_UTILS_H
 

@@ -1,3 +1,8 @@
+/*
+ * An Abstract Syntax Tree is the ideal in-memory representation of a program
+ * Contains types and methods for printing, deallocating, and converting to bytecodes
+*/
+
 #pragma once
 
 #include <stdbool.h>

@@ -44,3 +44,8 @@ void cream_stdlib_print(Cream_vm* vm, int argc) {
 error:
 	vm->err = true;
 }
+
+void cream_run_gc(Cream_vm* vm, int argc) {
+	vm_gc_mark(vm);
+	object_sweep();
+}

@@ -80,21 +80,21 @@ error:
 // TODO: move `Cream_obj` creation to `object.c` to allow for memory mgmt.
 // returns true if successful, false if not
 static void vm_push_int(Cream_vm *vm, int i) {
-	Cream_obj* data = cream_obj_create();
+	Cream_obj* data = object_create(vm);
 	data->type = TYPE_INTEGER;
 	data->int_val = i;
 	List_push(vm->stack, data);
 }
 static void vm_push_float(Cream_vm *vm, float f) {
-	Cream_obj* data = cream_obj_create();
+	Cream_obj* data = object_create(vm);
 	data->type = TYPE_FLOAT;
 	data->float_val = f;
 	List_push(vm->stack, data);
 }
 static void vm_push_str(Cream_vm *vm, char* s) {
-	Cream_obj* data = cream_obj_create();
+	Cream_obj* data = object_create(vm);
 	data->type = TYPE_STRING;
-	data->str_val = s;
+	data->str_val = strdup(s);
 	List_push(vm->stack, data);
 }
 // static bool vm_push_bool(Cream_vm *vm, bool b);
@@ -123,6 +123,7 @@ Cream_vm* cream_vm_create() {
 
 	cream_add_native(vm, "println", cream_stdlib_println);
 	cream_add_native(vm, "print", cream_stdlib_print);
+	cream_add_native(vm, "RUNGC", cream_run_gc);
 
 	return vm;
 error:
@@ -189,6 +190,20 @@ bool cream_run_native(Cream_vm* vm, char* name, int argc) {
 
 error:
 	return false;
+}
+
+// recurse over stack frames, marking all the objects in the symbol table
+void vm_gc_mark(Cream_vm* vm) {
+	debug("beginning GC mark");
+	LIST_FOREACH(vm->call_stack, first, next, cur) {
+		Stack_frame* frame = cur->data;
+		Map* table = frame->symbol_table;
+		for (struct MapNode* node = table->first; node != NULL; node = node->next) {
+			debug("marking %s", node->key);
+			Cream_obj* obj = node->data;
+			obj->marked = true;
+		}
+	}
 }
 
 void cream_vm_run(Cream_vm *vm) {
