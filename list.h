@@ -3,8 +3,7 @@
  * Found in the book "Learn C the Hard Way" by Zed Shaw
 */
 
-#ifndef list_h
-#define list_h
+#pragma once
 
 struct Node {
   void *data;
@@ -39,5 +38,3 @@ void List_print(List *list);
 #define LIST_FOREACH(L, S, M, V) struct Node *_node = NULL;\
   struct Node *V = NULL;\
   for(V = _node = L->S; _node != NULL; V = _node = _node->M)
-
-#endif

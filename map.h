@@ -2,8 +2,7 @@
  * Implements a basic hashtable
 */
 
-#ifndef map_h
-#define map_h
+#pragma once
 
 struct MapNode {
   char* key;
@@ -40,5 +39,3 @@ void Map_print(Map *map);
   struct MapNode *V = NULL;\
   for(V = _MapNode = L->S; _MapNode != NULL; V = _MapNode = _MapNode->M)
 */
-
-#endif

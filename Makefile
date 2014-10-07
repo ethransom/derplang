@@ -7,7 +7,17 @@ Modules = list.o object.o vm.o utils.o stdlib.o bytecode_parser.o map.o ast_node
 
 Tests = test/parser_test.o
 
-all: main 
+all: main
+
+vm.o: list.o map.o debug.h object.o bytecodes.o
+
+utils.o: debug.h
+
+bytecodes.o: list.o
+
+ast_nodes.o: list.o vm.o
+
+object.o: vm.o
 
 # parser files -> .c files
 grammar.tab.h grammar.tab.c: grammar.y

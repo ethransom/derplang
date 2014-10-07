@@ -3,8 +3,7 @@
  * Heap management and the sweep portion of the garbage collecter are here
 */
 
-#ifndef CREAM_OBJ_H
-#define CREAM_OBJ_H
+#pragma once
 
 #include <stdbool.h>
 
@@ -49,5 +48,3 @@ void object_sweep();
 void cream_obj_freeze(Cream_obj *obj);
 
 void object_destroy(Cream_obj *obj);
-
-#endif

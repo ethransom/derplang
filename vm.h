@@ -3,8 +3,7 @@
  * This includes the mark phase of garbage collection
 */
 
-#ifndef CREAM_VM_H
-#define CREAM_VM_H
+#pragma once
 
 #include <stdbool.h>
 #include <string.h>
@@ -12,7 +11,6 @@
 
 #include "list.h"
 #include "map.h"
-#include "utils.h"
 #include "debug.h"
 #include "object.h"
 #include "bytecodes.h"
@@ -79,5 +77,3 @@ void vm_gc_mark(Cream_vm *vm);
 
 /* run the vm */
 void cream_vm_run(Cream_vm *vm);
-
-#endif

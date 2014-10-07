@@ -2,8 +2,7 @@
  * Contains the C implementation of the Cream standard library
 */
 
-#ifndef STDLIB_H
-#define STDLIB_H
+#pragma once
 
 #include "vm.h"
 #include "object.h"
@@ -15,5 +14,3 @@ void cream_stdlib_println(Cream_vm* vm, int argc);
 void cream_stdlib_print(Cream_vm* vm, int argc);
 
 void cream_run_gc(Cream_vm* vm, int argc);
-
-#endif

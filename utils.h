@@ -5,8 +5,7 @@
  * If the bytecode parsing function is removed, remove this as well
 */
 
-#ifndef CREAM_UTILS_H
-#define CREAM_UTILS_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -23,5 +22,3 @@ char* cream_read_from_whitelist(char* inbuf, int* i, char* whitelist);
 char* cream_read_until_from_str(char* inbuf, int* i, char* term, char* allowed);
 
 char* cream_read_until_from_str_panicky(char* inbuf, int* i, char* term, char* allowed);
-
-#endif

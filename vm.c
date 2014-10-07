@@ -2,8 +2,6 @@
 
 #include "vm.h"
 
-#include "bytecodes.h"
-
 //============================== HELPER FUNCTIONS ==============================
 // marked as static and not forward-declared in the header so as to be private
 
