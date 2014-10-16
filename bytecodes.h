@@ -5,6 +5,7 @@
 #pragma once
 
 #include "list.h"
+#include <stdlib.h>
 
 // any updates to this MUST be mirrored in the string array in bytecodes.c
 typedef enum {
@@ -54,6 +55,20 @@ typedef List BCList;
 
 typedef instr* BCVec;
 
+typedef struct {
+	char* name;
+	// size_t varc; // number of local variables
+	size_t argc; // number of parameters
+	instr* blob;
+	size_t blob_len;
+} fn_blob_t;
+
+typedef struct {
+	char* name;
+	fn_blob_t* fns[4];
+	size_t fn_c;
+} file_blob_t;
+
 /*
  * returns a pointer to a string representation of a bytecode's type
  * example: CODE_ADD -> "add"
@@ -69,3 +84,7 @@ void bytecode_vec_print(instr* instrv, int instrc);
 // compress the bytecodes in `input` into a contiguous block
 // of memory. Return pointer to that block if successful. NULL otherwise.
 instr* bytecodes_compress(List* input);
+
+fn_blob_t* file_blob_add_fn(file_blob_t* blob, char* name);
+
+void file_blob_print(file_blob_t* blob);

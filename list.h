@@ -19,6 +19,8 @@ typedef struct {
 
 List *List_create();
 
+void List_init(List* list);
+
 void List_clear(List *list);
 
 void List_destroy(List *list);

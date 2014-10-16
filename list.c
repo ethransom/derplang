@@ -10,12 +10,16 @@ List *List_create()
   List *list = malloc(sizeof(List));
   assert(list != NULL);
 
+  List_init(list);
+
+  return list;
+}
+
+void List_init(List* list) {
   list->length = 0;
 
   list->first = NULL;
   list->last = NULL;
-
-  return list;
 }
 
 void List_clear(List *list) {

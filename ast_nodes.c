@@ -130,16 +130,34 @@ void ast_expr_free(NExpression* expr) {
 	free(expr);
 }
 
-bool ast_compile(ExprList* root, List* bytecodes) {
-	// List* bytecodes = List_create();
+bool ast_compile(ExprList* root, file_blob_t* blob) {
+	// initialize the file blob
+	blob->fn_c = 0;
 
-	return ast_list_compile(root, bytecodes);
+	// first function always for global expressions
+	fn_blob_t* fn = file_blob_add_fn(blob, "");
+	check_mem(fn);
+
+	List list; // used to store bytecodes for expressions in global scope
+	List_init(&list);
+
+	if (!ast_list_compile(root, &list, blob))
+		return false;
+
+	fn->blob_len = list.length;
+	fn->blob = bytecodes_compress(&list);
+	List_clear(&list);
+
+	return true;
+
+error:
+	return false;
 }
 
-bool ast_list_compile(ExprList* list, List* output) {
+bool ast_list_compile(ExprList* list, List* output, file_blob_t* blob) {
 	LIST_FOREACH(list, first, next, cur) {
 		NExpression* expr = cur->data;
-		check(ast_expr_compile(expr, output), "List element couldn't compile");
+		check(ast_expr_compile(expr, output, blob), "List element couldn't compile");
 	}
 	return true;
 
@@ -159,7 +177,7 @@ error:
 	return NULL;
 }
 
-bool ast_expr_compile(NExpression* expr, List* output) {
+bool ast_expr_compile(NExpression* expr, List* output, file_blob_t* blob) {
 	instr* tmp; // used in the following macro
 #define CODE(TYPE, STR, INT, FLOAT) tmp = _mkbytecode(TYPE, STR, INT, FLOAT); \
 	check(tmp, "Unable to allocate bytecode"); \
@@ -169,7 +187,7 @@ bool ast_expr_compile(NExpression* expr, List* output) {
 
 	switch(expr->type) {
 		case NASSIGNMENT:
-			check(ast_expr_compile(expr->assignment.val, output), "NASSIGNMENT couldn't compile!");
+			check(ast_expr_compile(expr->assignment.val, output, blob), "NASSIGNMENT couldn't compile!");
 			CODE(CODE_ASSIGN, expr->assignment.name, 0, 0.0);
 			break;
 		case NINTEGER: {
@@ -184,14 +202,14 @@ bool ast_expr_compile(NExpression* expr, List* output) {
 			CODE(CODE_PUSH_STR, expr->string, 0, 0.0);
 			break;
 		case NCALL:
-			check(ast_list_compile(expr->call.args, output), "NCALL couldn't compile!");
+			check(ast_list_compile(expr->call.args, output, blob), "NCALL couldn't compile!");
 			CODE(CODE_CALL, expr->call.name, expr->call.args->length, 0.0);
 			debug("Added call...");
 			break;
 		case NBINARYOP:
 			// postfix, so make sure the operands get pushed first
-			ast_expr_compile(expr->binary_op.left, output);
-			ast_expr_compile(expr->binary_op.right, output);
+			ast_expr_compile(expr->binary_op.left, output, blob);
+			ast_expr_compile(expr->binary_op.right, output, blob);
 
 			// the type of token denotes what type of operation we're performing
 			// we need to generate a bytecode based on this
@@ -217,7 +235,7 @@ bool ast_expr_compile(NExpression* expr, List* output) {
 			CODE(CODE_PUSH_LOOKUP, expr->lookup.name, 0, 0.0);
 			break;
 		case NIFSTRUCTURE:
-			ast_expr_compile(expr->if_structure.expr, output);
+			ast_expr_compile(expr->if_structure.expr, output, blob);
 
 			CODE(CODE_JUMP_IF_FALSE, NULL, 0, 0.0);
 			// keep a pointer to update once we know the body length
@@ -225,26 +243,35 @@ bool ast_expr_compile(NExpression* expr, List* output) {
 
 			int len_before_if = output->length;
 
-			ast_list_compile(expr->if_structure.block, output);
+			ast_list_compile(expr->if_structure.block, output, blob);
 
 			jump->arg2 = output->length - len_before_if;
 			break;
-		case NFUNCDEF:
-			CODE(CODE_REGISTER, expr->func_def.name, 0, 0.0);
-			// keep a pointer to update the function length when we've finished
-			instr* reg = output->last->data;
-			int start_len = output->length;
+		case NFUNCDEF: {
+			List list;
+			List_init(&list);
+			// SUPER HACK!!!!!!!!
+			// replace output with our new list
+			output = &list;
+
+			debug("encountered function %s\n", expr->func_def.name);
+
+			fn_blob_t* fn = file_blob_add_fn(blob, expr->func_def.name);
+			fn->argc = expr->func_def.arg_list->length;
 
 			LIST_FOREACH(expr->func_def.arg_list, first, next, cur) {
 				CODE(CODE_ASSIGN, cur->data, 0, 0.0);
 			}
 
-			ast_list_compile(expr->func_def.block, output);
+			ast_list_compile(expr->func_def.block, &list, blob);
 
 			CODE(CODE_RET, NULL, 0, 0.0);
 
-			reg->arg2 = output->length - start_len;
-			debug("Function %s contains %d bytecodes", reg->arg1, reg->arg2);
+			fn->blob_len = list.length;
+			fn->blob = bytecodes_compress(&list);
+			check_mem(fn->blob);
+			debug("Function %s contains %zd bytecodes", fn->name, fn->blob_len);
+		}
 			break;
 		case NNULL:
 		default:

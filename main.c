@@ -130,17 +130,16 @@ int main(int argc, char *argv[]) {
 		return EXIT_SUCCESS;
 	}
 
-	List* out = List_create();
+	file_blob_t blob;
+	blob.name = argv[optind];
 
-	check(ast_compile(programBlock, out), "Failed to compile AST");
+	check(ast_compile(programBlock, &blob), "Failed to compile AST");
 
-	vm->num_bytecodes = out->length;
-	vm->bytecode = bytecodes_compress(out);
-	check(vm->bytecode != NULL, "Couldn't compress bytecodes");
+	vm->blob = &blob;
 
 	if (bytecode_flag) {
 		debug("Printing bytecodes...");
-		bytecode_vec_print(vm->bytecode, vm->num_bytecodes);
+		file_blob_print(&blob);
 		return EXIT_SUCCESS;
 	}
 

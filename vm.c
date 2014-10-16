@@ -113,7 +113,7 @@ Cream_vm* cream_vm_create() {
 	check_mem(vm->func_map);
 	vm->func_map->not_found_val = (void*) -1;
 
-	vm->bytecode = NULL;
+	vm->blob = NULL;
 	vm->err = false;
 
 	vm->std_lib = List_create();
@@ -142,14 +142,15 @@ void cream_vm_destroy(Cream_vm *vm) {
 	// because the func_map only contains pointers to unowned memory, it's okay to just free it
 	Map_destroy(vm->func_map);
 
-	if (vm->bytecode != NULL) {
-		for (unsigned int pointer = 0; pointer < vm->num_bytecodes; pointer++) {
-			if ((vm->bytecode)[pointer].arg1 != NULL) {
-				free((vm->bytecode)[pointer].arg1);
-			}
-		}
-		free(vm->bytecode);
-	}
+	// TODO: deallocate thing?
+	// if (vm->bytecode != NULL) {
+	// 	for (unsigned int pointer = 0; pointer < vm->num_bytecodes; pointer++) {
+	// 		if ((vm->bytecode)[pointer].arg1 != NULL) {
+	// 			free((vm->bytecode)[pointer].arg1);
+	// 		}
+	// 	}
+	// 	free(vm->bytecode);
+	// }
 
 	LIST_FOREACH(vm->std_lib, first, next, cur) {
 		free(cur->data);
@@ -207,13 +208,16 @@ void vm_gc_mark(Cream_vm* vm) {
 void cream_vm_run(Cream_vm *vm) {
 	debug("beginning execution...");
 
-	size_t num_bytecodes = vm->num_bytecodes;
+	check(vm->blob->fn_c > 0, "file was empty?");
+	size_t num_bytecodes = vm->blob->fns[0]->blob_len;
 	debug("%zu bytecodes", num_bytecodes);
 
-	for (unsigned int pointer = 0; pointer < num_bytecodes; pointer++) {
-		instr* bytecode = vm->bytecode + pointer;
+	// start at the first instruction of the first function
+	fn_blob_t* cur_fn = vm->blob->fns[0];
+	for (size_t pointer = 0; pointer < cur_fn->blob_len; pointer++) {
+		instr* bytecode = &cur_fn->blob[pointer];
 
-		debug("code: %s @ %d",
+		debug("code: %s @ %zd",
 			code_type_to_str(bytecode->code),
 			pointer
 		);
@@ -253,13 +257,22 @@ void cream_vm_run(Cream_vm *vm) {
 				debug("'%d' arg call to '%s'", argc, identifier);
 
 				// check defined functions
-				int addr = (int) Map_get(vm->func_map, identifier);
-				if (addr != -1) {
+				fn_blob_t* fn = NULL;
+				for (int i = 0; i < vm->blob->fn_c; i++) {
+					if (strcmp(vm->blob->fns[i]->name, identifier) == 0) {
+						fn = vm->blob->fns[i];
+						break;
+					}
+				}
+				if (fn != NULL) {
 					Stack_frame* frame = vm_add_stack_frame(vm);
 					frame->return_addr = pointer;
+					frame->return_fn = cur_fn;
 
-					debug("jumping to '%s' @ %d", identifier, addr);
-					pointer = addr;
+					debug("jumping to func: '%s'", identifier);
+					// when the loop restarts, pointer gets incremented to 1
+					pointer = -1;
+					cur_fn = fn;
 					break;
 				}
 
@@ -267,12 +280,6 @@ void cream_vm_run(Cream_vm *vm) {
 				bool success = cream_run_native(vm, identifier, argc);
 
 				check(success != false, "unknown function: '%s'", identifier);
-			}
-				break;
-			case CODE_REGISTER: {
-				debug("Registered function '%s' @ %d", bytecode->arg1, pointer);
-				Map_set(vm->func_map, bytecode->arg1, (void*) pointer);
-				pointer += bytecode->arg2;
 			}
 				break;
 			case CODE_PUSH_LOOKUP: {
@@ -295,10 +302,11 @@ void cream_vm_run(Cream_vm *vm) {
 				break;
 			case CODE_RET: {
 				Stack_frame* last_frame = List_pop(vm->call_stack);
-				int addr = (int) last_frame->return_addr;
-				debug("returning to %d from %d", addr, pointer);
+				debug("returning to %zd from %zd", last_frame->return_addr, pointer);
+				pointer = last_frame->return_addr;
+				cur_fn = last_frame->return_fn;
+				
 				Map_destroy(last_frame->symbol_table);
-				pointer = addr;
 				free(last_frame);
 			}
 				break;

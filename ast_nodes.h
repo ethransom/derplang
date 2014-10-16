@@ -9,6 +9,7 @@
 
 #include "list.h"
 #include "vm.h"
+#include "bytecodes.h"
 
 #define MAKE_EXPR
 
@@ -96,8 +97,8 @@ void ast_list_free(ExprList* list);
 void ast_expr_free(NExpression* expr);
 
 
-bool ast_compile(ExprList* root, List* bytecodes);
+bool ast_compile(ExprList* root, file_blob_t* output);
 
-bool ast_list_compile(ExprList* list, List* output);
+bool ast_list_compile(ExprList* list, List* output, file_blob_t* blob);
 
-bool ast_expr_compile(NExpression* expr, List* output);
+bool ast_expr_compile(NExpression* expr, List* output, file_blob_t* blob);

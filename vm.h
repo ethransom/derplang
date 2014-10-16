@@ -32,7 +32,8 @@ typedef enum {
 } Vm_arithmetic_optype;
 
 typedef struct {
-  int return_addr;
+  size_t return_addr;
+  fn_blob_t* return_fn;
   Map* symbol_table;
 } Stack_frame;
 
@@ -44,8 +45,9 @@ typedef struct {
   bool err;
 
   int pointer;
-  instr* bytecode;
-  size_t num_bytecodes;
+  // instr* bytecode;
+  file_blob_t* blob;
+  // size_t num_bytecodes;
 
   List* std_lib;
 } Cream_vm;

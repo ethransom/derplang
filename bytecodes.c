@@ -63,3 +63,31 @@ instr* bytecodes_compress(List* input) {
 error:
 	return NULL;
 }
+
+fn_blob_t* file_blob_add_fn(file_blob_t* blob, char* name) {
+	check(blob->fn_c < 4, "file_blob_t is full!");
+
+	fn_blob_t* fn = malloc(sizeof(fn_blob_t));
+	check_mem(fn);
+	fn->name = name;
+	fn->blob = NULL;
+	fn->blob_len = 0xfeedbeef;
+
+	blob->fns[blob->fn_c] = fn;
+	blob->fn_c++;
+
+	return fn;
+
+error:
+	return NULL;
+}
+
+void file_blob_print(file_blob_t* blob) {
+	printf("'%s' has %zd functions\n", blob->name, blob->fn_c);
+	for (int i = 0; i < blob->fn_c; i++) {
+		fn_blob_t* fn = blob->fns[i];
+		printf("FUNC: %s (length: %zd)\n", fn->name, fn->blob_len);
+		bytecode_vec_print(fn->blob, fn->blob_len);
+		printf("END FUNC %s\n", blob->name);
+	}
+}
