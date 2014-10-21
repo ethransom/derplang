@@ -3,7 +3,9 @@ FLAGS=-Wall -std=gnu99
 # PRODUCTION_FLAGS=
 CFLAGS=-g $(FLAGS)
 
-Modules = list.o object.o vm.o utils.o stdlib.o bytecode_parser.o map.o ast_nodes.o bytecodes.o grammar.tab.o lex.yy.o
+# note: bytecode_parser.o has been discontinued
+
+Modules = list.o object.o vm.o utils.o stdlib.o map.o ast_nodes.o bytecodes.o grammar.tab.o lex.yy.o
 
 Tests = test/parser_test.o
 

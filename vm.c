@@ -346,7 +346,7 @@ void cream_vm_run(Cream_vm *vm) {
 				break;
 		}
 
-		check(!vm->err, "error on line %d", pointer);
+		check(!vm->err, "error on line %zd", pointer);
 	}
 
 	return;

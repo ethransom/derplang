@@ -17,12 +17,12 @@ void object_init(Cream_obj* obj) {
 }
 
 void object_heap_dump() {
-	debug("heap: %x %x %x %x", heap[0], heap[1], heap[2], heap[3]);
+	debug("heap: %p %p %p %p", heap[0], heap[1], heap[2], heap[3]);
 }
 
 Cream_obj* object_create(Cream_vm* vm) {
 	if (heap == NULL) {
-		debug("allocating heap of size %d (each object %d bytes)", heap_size, sizeof(Cream_obj));
+		debug("allocating heap of size %zd (each object %zd bytes)", heap_size, sizeof(Cream_obj));
 		heap = malloc(sizeof(Cream_obj*) * heap_size);
 		for (int i = 0; i < heap_size; ++i)
 		{
@@ -63,7 +63,7 @@ void object_sweep() {
 			debug("skipping marked object");
 			obj->marked = false;
 		} else {
-			debug("found unmarked object! (%x)", obj);
+			debug("found unmarked object! (%p)", obj);
 			object_destroy(obj);
 
 			// recompact the heap
@@ -74,7 +74,7 @@ void object_sweep() {
 			object_heap_dump();
 		}
 	}
-	debug("sweep finished, heap now (%d/%d)", next_free_slot, heap_size);
+	debug("sweep finished, heap now (%d/%zd)", next_free_slot, heap_size);
 	object_heap_dump();
 }
 
