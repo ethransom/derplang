@@ -50,3 +50,6 @@ dist: $(Modules) main.c
 
 # DERPS are meant for testing
 derp/object_derp: object.o
+
+test: main
+	./test.sh
