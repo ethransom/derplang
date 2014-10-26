@@ -1,0 +1,19 @@
+num = 29
+big_num = 10000
+
+fn over_nine_thousand(num ) {
+	if (num > 9000) {
+		println("num: ", num, " OVER 9000!")
+	}
+}
+
+over_nine_thousand(num)
+over_nine_thousand(big_num)
+over_nine_thousand(666)
+over_nine_thousand(123456789)
+
+over_nine_thousand(num + (9000 - num) + 1)
+println("Num is still: ", num)
+num = num + 55555
+println("now num is: ", num)
+over_nine_thousand(num)

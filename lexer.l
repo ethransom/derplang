@@ -9,13 +9,18 @@
 #define SAVE_TOKEN yylval.string = strdup(yytext)
 #define TOKEN(t) (yylval.token = t)
 
-%}
-%%
+#define SAVE_TOKEN_NO_QUOTES \
+	yylval.string = malloc(strlen(yytext) - 1); \
+	memcpy(yylval.string, (yytext + 1), strlen(yytext) - 1); \
+	yylval.string[strlen(yytext) - 2] = '\0';
 
+%}
+
+%%
 [ \t\n]                 ;
 "if"					return TOKEN(TKEYWORDIF);
 "fn"					return TOKEN(TKEYWORDFUNCDEF);
-\"(\\.|[^"])*\" 	    SAVE_TOKEN; return TSTRING; /* " */
+\"(\\.|[^"])*\" 	    SAVE_TOKEN_NO_QUOTES; return TSTRING; /* " */
 [a-zA-Z_][a-zA-Z0-9_]*  SAVE_TOKEN; return TIDENTIFIER;
 [0-9]+\.[0-9]*          SAVE_TOKEN; return TDOUBLE;
 [0-9]+                  SAVE_TOKEN; return TINTEGER;
@@ -39,12 +44,3 @@
 .                       printf("Unknown token!\n"); yyterminate();
 
 %%
-// [ \t\r] 			;  // ignore all whitespace
-// [0-9]+\.[0-9]+  	{ yylval.fval = atof(yytext); return FLOAT; printf("Flex found a floating-point number: %s\n", yytext); }
-// [0-9]+          	{ yylval.ival = atoi(yytext); return INT;	printf("Flex found an integer: %s\n", yytext); }
-// [a-zA-Z0-9]+    	{
-	// we have to copy because we can't rely on yytext not changing underneath us:
-	// yylval.sval = strdup(yytext);
-	// return STRING;
-	// printf("Flex found an identifier: %s\n", yytext);
-// }

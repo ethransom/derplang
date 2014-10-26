@@ -31,7 +31,7 @@ Cream_obj* object_create(Cream_vm* vm) {
 	}
 
 	if (next_free_slot > heap_size) {
-		log_warn("OUT OF HEAP, performing GC");
+		debug("OUT OF HEAP, performing GC");
 		vm_gc_mark(vm);
 		object_sweep();
 	}
