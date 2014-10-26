@@ -119,7 +119,12 @@ static void vm_push_str(Cream_vm *vm, char* s) {
 	data->str_val = strdup(s);
 	vm_stack_push(vm, data);
 }
-// static bool vm_push_bool(Cream_vm *vm, bool b);
+static void vm_push_bool(Cream_vm *vm, bool b) {
+	Cream_obj* data = object_create(vm);
+	data->type = TYPE_BOOLEAN;
+	data->bool_val = b;
+	vm_stack_push(vm, data);
+}
 
 Cream_vm* cream_vm_create() {
 	// puts("cream obj created");
@@ -261,6 +266,9 @@ void cream_vm_run(Cream_vm *vm) {
 				break;
 			case CODE_PUSH_STR:
 				vm_push_str(vm, bytecode->arg1);
+				break;
+			case CODE_PUSH_BOOL:
+				vm_push_bool(vm, bytecode->arg2);
 				break;
 
 			// ================== MATHEMATICAL OPERATIONS =================== //

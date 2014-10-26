@@ -44,7 +44,7 @@ ExprList *programBlock; /* the top level root node of our final AST */
    they represent.
  */
 %token <string> TIDENTIFIER TINTEGER TDOUBLE TSTRING
-%token <token> TKEYWORDIF TKEYWORDFUNCDEF
+%token <token> TKEYWORDIF TKEYWORDFUNCDEF TTRUE TFALSE
 %token <token> TCEQ TCNE TCLT TCLE TCGT TCGE TEQUAL
 %token <token> TLPAREN TRPAREN TLBRACE TRBRACE TCOMMA TDOT
 %token <token> TPLUS TMINUS TMUL TDIV
@@ -115,6 +115,8 @@ ident : TIDENTIFIER { debug("casting ident into expr"); $$ = ast_expr_new(NLOOKU
 literal : TINTEGER { $$ = ast_expr_new(NINTEGER); $$->integer = atol($1); free($1); }
         | TDOUBLE  { $$ = ast_expr_new(NDOUBLE);  $$->tdouble = atof($1); free($1); }
         | TSTRING  { $$ = ast_expr_new(NSTRING);  $$->string = $1; }
+        | TTRUE    { $$ = ast_expr_new(NBOOL);    $$->tbool = true; }
+        | TFALSE   { $$ = ast_expr_new(NBOOL);    $$->tbool = false; }
         ;
 
 expr : TIDENTIFIER TLPAREN call_args TRPAREN { $$ = ast_expr_new(NCALL); $$->call.name = $1; $$->call.args = $3; /*delete $3;*/ }

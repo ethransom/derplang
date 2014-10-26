@@ -38,6 +38,9 @@ void ast_exp_print(NExpression* expr, int indent) {
 		case NSTRING:
 			treeprintf(indent, "string val: %s\n", expr->string);
 			break;
+		case NBOOL:
+			treeprintf(indent, "bool val: %s\n", expr->tbool ? "true" : "false");
+			break;
 		case NCALL:
 			treeprintf(indent, "NCall name: %s, args:\n", expr->call.name);
 			ast_list_print(expr->call.args, indent);
@@ -119,6 +122,7 @@ void ast_expr_free(NExpression* expr) {
 		case NINTEGER:
 		case NDOUBLE:
 		case NSTRING:
+		case NBOOL:
 			break;
 
 		case NNULL:
@@ -200,6 +204,9 @@ bool ast_expr_compile(NExpression* expr, List* output, file_blob_t* blob) {
 			break;
 		case NSTRING:
 			CODE(CODE_PUSH_STR, expr->string, 0, 0.0);
+			break;
+		case NBOOL:
+			CODE(CODE_PUSH_BOOL, NULL, expr->tbool, 0.0);
 			break;
 		case NCALL:
 			check(ast_list_compile(expr->call.args, output, blob), "NCALL couldn't compile!");

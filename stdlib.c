@@ -30,10 +30,9 @@ bool cream_stdlib_print(int argc, Cream_obj** argv) {
 			case TYPE_FLOAT:
 				printf("%f", (double) data->float_val);
 				break;
-			// case TYPE_BOOLEAN:
-				// printf("%s", (*((bool*) data->data) == 0 ? "true" : "false"));
-				// break;
-			// case TYPE_BOOLEAN
+			case TYPE_BOOLEAN:
+				printf("%s", data->bool_val ? "true" : "false");
+				break;
 			default:
 				sentinel("Tried to print unknown type");
 				break;

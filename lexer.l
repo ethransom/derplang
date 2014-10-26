@@ -20,6 +20,8 @@
 [ \t\n]                 ;
 "if"					return TOKEN(TKEYWORDIF);
 "fn"					return TOKEN(TKEYWORDFUNCDEF);
+"true"					return TOKEN(TTRUE);
+"false"					return TOKEN(TFALSE);
 \"(\\.|[^"])*\" 	    SAVE_TOKEN_NO_QUOTES; return TSTRING; /* " */
 [a-zA-Z_][a-zA-Z0-9_]*  SAVE_TOKEN; return TIDENTIFIER;
 [0-9]+\.[0-9]*          SAVE_TOKEN; return TDOUBLE;
