@@ -18,6 +18,8 @@
 #define MAX_LINE_LEN 64
 #define MAX_IDENT_LEN 16
 
+#define VM_STACK_HEIGHT 64
+
 typedef enum {
   OP_ADD,
   OP_SUB,
@@ -38,7 +40,9 @@ typedef struct {
 } Stack_frame;
 
 typedef struct {
-  List* stack;
+  Cream_obj** stack;
+  int stack_len;
+
   List* call_stack; // list of Stack_frames
   Map* func_map;
 
@@ -52,7 +56,7 @@ typedef struct {
   List* std_lib;
 } Cream_vm;
 
-typedef void (*Cream_native_fn)(Cream_vm* vm, int argc);
+typedef bool (*Cream_native_fn)(int argc, Cream_obj** argv);
 
 typedef struct {
   char* name;

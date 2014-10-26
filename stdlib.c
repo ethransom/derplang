@@ -4,16 +4,19 @@
 
 #include "stdlib.h"
 
-void cream_stdlib_println(Cream_vm* vm, int argc) {
-	cream_stdlib_print(vm, argc);
+bool cream_stdlib_println(int argc, Cream_obj** argv) {
+	if (!cream_stdlib_print(argc, argv)) {
+		return false;
+	}
 
 	printf("\n");
+
+	return true;
 }
 
-void cream_stdlib_print(Cream_vm* vm, int argc) {
+bool cream_stdlib_print(int argc, Cream_obj** argv) {
 	for (int i = 0; i < argc; i++) {
-		check(vm->stack->length > 0, "'print': ran out of stack! :(");
-		Cream_obj* data = List_pop(vm->stack);
+		Cream_obj* data = argv[i];
 
 		debug("Printing type: %d", data->type);
 
@@ -36,16 +39,12 @@ void cream_stdlib_print(Cream_vm* vm, int argc) {
 				break;
 		}
 
-		// free(data);
+		if (i != (argc - 1)) // not on last loop
+			putchar(' ');
 	}
 
-	return;
+	return true;
 
 error:
-	vm->err = true;
-}
-
-void cream_run_gc(Cream_vm* vm, int argc) {
-	vm_gc_mark(vm);
-	object_sweep();
+	return false;
 }

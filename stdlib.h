@@ -9,8 +9,6 @@
 
 #include "debug.h"
 
-void cream_stdlib_println(Cream_vm* vm, int argc);
+bool cream_stdlib_println(int argc, Cream_obj** argv);
 
-void cream_stdlib_print(Cream_vm* vm, int argc);
-
-void cream_run_gc(Cream_vm* vm, int argc);
+bool cream_stdlib_print(int argc, Cream_obj** argv);

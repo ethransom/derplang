@@ -18,14 +18,38 @@ error:
 	return NULL;
 }
 
+bool vm_stack_push(Cream_vm* vm, Cream_obj* obj) {
+	if (vm->stack_len >= VM_STACK_HEIGHT) {
+		log_err("Stack overflow!");
+		return false;
+	}
+
+	vm->stack[vm->stack_len] = obj;
+	vm->stack_len++;
+
+	return true;
+}
+
+Cream_obj* vm_stack_pop(Cream_vm* vm) {
+	if (vm->stack_len <= 0) {
+		log_err("Stack underflow!");
+		return NULL;
+	}
+
+	vm->stack_len -= 1;
+	Cream_obj* obj = vm->stack[vm->stack_len];
+
+	return obj;
+}
+
 /*
  * Perform the arithmetic operation indicated by optype
  * Pushes the result of the operation to the stack
 */
 // TODO: potentially inline?
 static void vm_arithmetic(Cream_vm* vm, Vm_arithmetic_optype optype) {
-	Cream_obj* right = List_pop(vm->stack);
-	Cream_obj* left = List_pop(vm->stack);
+	Cream_obj* right = vm_stack_pop(vm);
+	Cream_obj* left = vm_stack_pop(vm);
 	check(right->type == TYPE_INTEGER, "Expected integer");
 	check(left->type == TYPE_INTEGER, "Expected integer");
 
@@ -63,7 +87,7 @@ static void vm_arithmetic(Cream_vm* vm, Vm_arithmetic_optype optype) {
 
 	debug("result of operation: b: %d i: %d", result->bool_val, result->int_val);
 
-	List_push(vm->stack, result);
+	vm_stack_push(vm, result);
 	// free(right);
 	// free(left);
 
@@ -81,19 +105,19 @@ static void vm_push_int(Cream_vm *vm, int i) {
 	Cream_obj* data = object_create(vm);
 	data->type = TYPE_INTEGER;
 	data->int_val = i;
-	List_push(vm->stack, data);
+	vm_stack_push(vm, data);
 }
 static void vm_push_float(Cream_vm *vm, float f) {
 	Cream_obj* data = object_create(vm);
 	data->type = TYPE_FLOAT;
 	data->float_val = f;
-	List_push(vm->stack, data);
+	vm_stack_push(vm, data);
 }
 static void vm_push_str(Cream_vm *vm, char* s) {
 	Cream_obj* data = object_create(vm);
 	data->type = TYPE_STRING;
 	data->str_val = strdup(s);
-	List_push(vm->stack, data);
+	vm_stack_push(vm, data);
 }
 // static bool vm_push_bool(Cream_vm *vm, bool b);
 
@@ -102,7 +126,7 @@ Cream_vm* cream_vm_create() {
 	Cream_vm *vm = malloc(sizeof(Cream_vm));
 	check_mem(vm);
 
-	vm->stack = List_create();
+	vm->stack = malloc(VM_STACK_HEIGHT * sizeof(Cream_obj*));
 	check_mem(vm->stack);
 
 	vm->call_stack = List_create();
@@ -117,11 +141,10 @@ Cream_vm* cream_vm_create() {
 	vm->err = false;
 
 	vm->std_lib = List_create();
-	check_mem(vm->stack);
+	check_mem(vm->std_lib);
 
 	cream_add_native(vm, "println", cream_stdlib_println);
 	cream_add_native(vm, "print", cream_stdlib_print);
-	cream_add_native(vm, "RUNGC", cream_run_gc);
 
 	return vm;
 error:
@@ -133,9 +156,9 @@ void cream_vm_destroy(Cream_vm *vm) {
 	check(vm != NULL, "VM is already destroyed!");
 
 	{
-		LIST_FOREACH(vm->stack, first, next, cur) free(cur->data);
+		// LIST_FOREACH(vm->stack, first, next, cur) free(cur->data);
 	}
-	List_destroy(vm->stack);
+	free(vm->stack);
 
 	List_destroy(vm->call_stack);
 
@@ -182,7 +205,11 @@ bool cream_run_native(Cream_vm* vm, char* name, int argc) {
 		Cream_native* native = cur->data;
 		debug("comparing '%s' and '%s'...", native->name, name);
 		if (strcmp(native->name, name) == 0) {
-			native->fn(vm, argc);
+			// we've found our function, call it
+			vm->stack_len -= argc; // destructive, because fn call pops the stack
+			Cream_obj** stack_slice = vm->stack + vm->stack_len;
+
+			native->fn(argc, stack_slice);
 			return true;
 		}
 	}
@@ -290,12 +317,12 @@ void cream_vm_run(Cream_vm *vm) {
 					log_err("undefined variable '%s'", bytecode->arg1);
 					vm->err = true;
 				}
-				List_push(vm->stack, data);
+				vm_stack_push(vm, data);
 			}
 				break;
 			case CODE_ASSIGN: {
 				debug("assigning to %s", bytecode->arg1);
-				Cream_obj* data = List_pop(vm->stack);
+				Cream_obj* data = vm_stack_pop(vm);
 				Stack_frame* frame = (Stack_frame*) vm->call_stack->last->data;
 				Map_set(frame->symbol_table, bytecode->arg1, data);
 			}
@@ -311,7 +338,7 @@ void cream_vm_run(Cream_vm *vm) {
 			}
 				break;
 			case CODE_JUMP_IF_FALSE: {
-				Cream_obj* top = List_pop(vm->stack);
+				Cream_obj* top = vm_stack_pop(vm);
 				if (top->type != TYPE_BOOLEAN) {
 					log_err("don't know how to evaluate truthyness of non-boolean");
 					vm->err = true;
@@ -351,6 +378,7 @@ void cream_vm_run(Cream_vm *vm) {
 
 	return;
 error:
-	List_clear(vm->stack);
+	// TODO: potentially do useful cleanup here
+	return;
 }
 

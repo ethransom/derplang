@@ -7,8 +7,6 @@
 
 #include <stdbool.h>
 
-#include "vm.h"
-
 // GENERIC Cream value
 typedef enum {
 	TYPE_OBJECT,
@@ -33,6 +31,8 @@ typedef struct {
 		bool bool_val;
 	};
 } Cream_obj;
+
+#include "vm.h"
 
 #define OBJ_IS_NATIVE(obj) (obj->type != TYPE_OBJECT)
 
