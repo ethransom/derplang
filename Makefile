@@ -46,7 +46,7 @@ clean:
 	rm -f cream main $(Modules)
 
 dist: $(Modules) main.c
-	gcc -o cream $(FLAGS) -lm -Ofast -DNDEBUG $(Modules) main.c
+	gcc -o cream $(FLAGS) -lfl -lm -Ofast -DNDEBUG $(Modules) main.c
 
 # DERPS are meant for testing
 derp/object_derp: object.o
