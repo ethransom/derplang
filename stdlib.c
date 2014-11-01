@@ -4,17 +4,17 @@
 
 #include "stdlib.h"
 
-bool cream_stdlib_println(int argc, Cream_obj** argv) {
-	if (!cream_stdlib_print(argc, argv)) {
-		return false;
+err_t* cream_stdlib_println(int argc, Cream_obj** argv) {
+	err_t* err = cream_stdlib_print(argc, argv);
+
+	if (err == NULL) {
+		printf("\n");
 	}
 
-	printf("\n");
-
-	return true;
+	return err;
 }
 
-bool cream_stdlib_print(int argc, Cream_obj** argv) {
+err_t* cream_stdlib_print(int argc, Cream_obj** argv) {
 	for (int i = 0; i < argc; i++) {
 		Cream_obj* data = argv[i];
 
@@ -42,8 +42,8 @@ bool cream_stdlib_print(int argc, Cream_obj** argv) {
 			putchar(' ');
 	}
 
-	return true;
+	return NULL;
 
 error:
-	return false;
+	return err_create(&InternalErr, NULL);
 }

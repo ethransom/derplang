@@ -5,7 +5,6 @@
 //============================== HELPER FUNCTIONS ==============================
 // marked as static and not forward-declared in the header so as to be private
 
-//
 static Stack_frame* vm_add_stack_frame(Cream_vm* vm) {
 	Stack_frame* frame = malloc(sizeof(Stack_frame));
 	check_mem(frame);
@@ -44,6 +43,15 @@ Cream_obj* vm_stack_pop(Cream_vm* vm) {
 	Cream_obj* obj = vm->stack[vm->stack_len];
 
 	return obj;
+}
+
+Stack_frame* vm_call_stack_pop(Cream_vm* vm) {
+	Stack_frame* last_frame = List_pop(vm->call_stack);
+	if (last_frame == NULL) return NULL;
+
+	Map_destroy(last_frame->symbol_table);
+
+	return last_frame;
 }
 
 /*
@@ -98,7 +106,7 @@ static void vm_arithmetic(Cream_vm* vm, Vm_arithmetic_optype optype) {
 	return;
 
 error:
-	vm->err = true;
+	vm->err = err_create(&InternalErr, NULL);
 }
 
 // =========== PUSH HELPERS ========== //
@@ -241,6 +249,7 @@ void vm_gc_mark(Cream_vm* vm) {
 	}
 }
 
+
 void cream_vm_run(Cream_vm *vm) {
 	debug("beginning execution...");
 
@@ -250,7 +259,8 @@ void cream_vm_run(Cream_vm *vm) {
 
 	// start at the first instruction of the first function
 	fn_blob_t* cur_fn = vm->blob->fns[0];
-	for (size_t pointer = 0; pointer < cur_fn->blob_len; pointer++) {
+	size_t pointer = 0;
+	for (pointer = 0; pointer < cur_fn->blob_len; pointer++) {
 		instr* bytecode = &cur_fn->blob[pointer];
 
 		debug("code: %s @ %zd",
@@ -318,7 +328,9 @@ void cream_vm_run(Cream_vm *vm) {
 				// check stdlib functions
 				bool success = cream_run_native(vm, identifier, argc);
 
-				check(success != false, "unknown function: '%s'", identifier);
+				if (success == false) {
+					vm->err = err_create(&LookupErr, "foobar"); // "unknown function: '%s'", identifier);
+				}
 			}
 				break;
 			case CODE_PUSH_LOOKUP: {
@@ -327,7 +339,7 @@ void cream_vm_run(Cream_vm *vm) {
 				Cream_obj* data = Map_get(frame->symbol_table, bytecode->arg1);
 				if (data == frame->symbol_table->not_found_val) {
 					log_err("undefined variable '%s'", bytecode->arg1);
-					vm->err = true;
+					vm->err = err_create(&LookupErr, "undefined variable");
 				}
 				vm_stack_push(vm, data);
 			}
@@ -353,7 +365,7 @@ void cream_vm_run(Cream_vm *vm) {
 				Cream_obj* top = vm_stack_pop(vm);
 				if (top->type != TYPE_BOOLEAN) {
 					log_err("don't know how to evaluate truthyness of non-boolean");
-					vm->err = true;
+					vm->err = err_create(&TypeErr, "expected boolean");
 					break;
 				}
 
@@ -377,11 +389,10 @@ void cream_vm_run(Cream_vm *vm) {
 			case CODE_NULL:
 				break;
 			default:
-				log_err("Unknown code: %s (%d)",
+				sentinel("Unknown code: %s (%d)",
 					code_type_to_str(bytecode->code),
 					bytecode->code
 				);
-				vm->err = true;
 				break;
 		}
 
@@ -390,7 +401,29 @@ void cream_vm_run(Cream_vm *vm) {
 
 	return;
 error:
-	// TODO: potentially do useful cleanup here
+	if (!vm->err) {
+		// we crashed internally
+		err_t* err = err_create(&InternalErr, "Something went wrong internally");
+		err->line = pointer;
+		err->file = cur_fn->name;
+		vm->err = err;
+	}
+
+	err_print(vm->err);
+
+	// print backtrace
+	Stack_frame* frame;
+	while ((frame = vm_call_stack_pop(vm)) != NULL) {
+		char* name;
+		if (frame->return_fn == NULL)
+			name = "ROOT";
+		else 
+			name = frame->return_fn->name;
+
+		printf("\t%s:%zd\n", name, frame->return_addr);
+		free(frame);
+	}
+
 	return;
 }
 

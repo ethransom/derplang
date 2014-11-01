@@ -14,6 +14,7 @@
 #include "debug.h"
 #include "object.h"
 #include "bytecodes.h"
+#include "err.h"
 
 #define MAX_LINE_LEN 64
 #define MAX_IDENT_LEN 16
@@ -46,7 +47,7 @@ typedef struct {
   List* call_stack; // list of Stack_frames
   Map* func_map;
 
-  bool err;
+  err_t* err;
 
   int pointer;
   // instr* bytecode;
@@ -56,7 +57,7 @@ typedef struct {
   List* std_lib;
 } Cream_vm;
 
-typedef bool (*Cream_native_fn)(int argc, Cream_obj** argv);
+typedef err_t* (*Cream_native_fn)(int argc, Cream_obj** argv);
 
 typedef struct {
   char* name;

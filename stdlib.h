@@ -9,6 +9,6 @@
 
 #include "debug.h"
 
-bool cream_stdlib_println(int argc, Cream_obj** argv);
+err_t* cream_stdlib_println(int argc, Cream_obj** argv);
 
-bool cream_stdlib_print(int argc, Cream_obj** argv);
+err_t* cream_stdlib_print(int argc, Cream_obj** argv);

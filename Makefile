@@ -5,7 +5,8 @@ CFLAGS=-g $(FLAGS)
 
 # note: bytecode_parser.o has been discontinued
 
-Modules = list.o object.o vm.o utils.o stdlib.o map.o ast_nodes.o bytecodes.o grammar.tab.o lex.yy.o
+Modules = list.o object.o vm.o utils.o stdlib.o map.o ast_nodes.o bytecodes.o \
+			err.o grammar.tab.o lex.yy.o
 
 Tests = test/parser_test.o
 
