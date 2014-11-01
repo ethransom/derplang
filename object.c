@@ -30,10 +30,15 @@ Cream_obj* object_create(Cream_vm* vm) {
 		}
 	}
 
-	if (next_free_slot > heap_size) {
+	if (next_free_slot >= heap_size) {
 		debug("OUT OF HEAP, performing GC");
 		vm_gc_mark(vm);
 		object_sweep();
+
+		if (next_free_slot >= heap_size) {
+			log_err("GC failed to free up space!");
+			return NULL;
+		}
 	}
 
 	Cream_obj *obj = malloc(sizeof(Cream_obj));
