@@ -1,0 +1,7 @@
+println("Let's count to 10!")
+
+int = 1
+while (int <= 10) {
+	println(int)
+	int = int + 1
+}

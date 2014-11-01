@@ -22,6 +22,9 @@ ExprList *programBlock; /* the top level root node of our final AST */
 // void yyerror(const char *s) { printf("ERROR: %s\n", s); }
 %}
 
+%define parse.lac full
+%define parse.error verbose
+
 /* Represents the many different ways we can access our data */
 %union {
     // Node *node;
@@ -44,7 +47,7 @@ ExprList *programBlock; /* the top level root node of our final AST */
    they represent.
  */
 %token <string> TIDENTIFIER TINTEGER TDOUBLE TSTRING
-%token <token> TKEYWORDIF TKEYWORDFUNCDEF TTRUE TFALSE
+%token <token> TKEYWORDIF TKEYWORDFUNCDEF TKEYWORDWHILE TTRUE TFALSE
 %token <token> TCEQ TCNE TCLT TCLE TCGT TCGE TEQUAL
 %token <token> TLPAREN TRPAREN TLBRACE TRBRACE TCOMMA TDOT
 %token <token> TPLUS TMINUS TMUL TDIV
@@ -64,7 +67,7 @@ ExprList *programBlock; /* the top level root node of our final AST */
 // %type <stmt> stmt
 %type <expr_list> stmts call_args block
 // %type <stmts> stmt
-%type <expression> var_assign stmt expr literal ident if_structure func_decl
+%type <expression> var_assign stmt expr literal ident if_structure func_decl while_structure
 %type <token> comparison
 
 /* Operator precedence for mathematical operators */
@@ -85,7 +88,7 @@ stmts : stmt { $$ = List_create(); List_push($$, $1); }
       | stmts stmt { List_push($1, $2); }
       ;
 
-stmt : var_assign | if_structure | func_decl | expr
+stmt : var_assign | if_structure | while_structure | func_decl | expr
      ;
 // stmt : var_assign | func_decl
 //      | expr { $$ = new NExpressionStatement(*$1); }
@@ -99,6 +102,8 @@ block : TLBRACE stmts TRBRACE { $$ = $2; }
       ;
 
 if_structure : TKEYWORDIF expr block  { $$ = ast_expr_new(NIFSTRUCTURE); $$->if_structure.expr = $2; $$->if_structure.block = $3; }
+
+while_structure : TKEYWORDWHILE expr block { $$ = ast_expr_new(NWHILESTRUCTURE); $$->while_structure.expr = $2; $$->if_structure.block = $3; }
 
 func_decl :  TKEYWORDFUNCDEF TIDENTIFIER TLPAREN func_decl_args TRPAREN block
             { $$ = ast_expr_new(NFUNCDEF); $$->func_def.name = $2; $$->func_def.arg_list = $4; $$->func_def.block = $6; /*delete $4;*/ }

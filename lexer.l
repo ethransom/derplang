@@ -19,6 +19,7 @@
 %%
 [ \t\n]                 ;
 "if"					return TOKEN(TKEYWORDIF);
+"while"					return TOKEN(TKEYWORDWHILE);
 "fn"					return TOKEN(TKEYWORDFUNCDEF);
 "true"					return TOKEN(TTRUE);
 "false"					return TOKEN(TFALSE);

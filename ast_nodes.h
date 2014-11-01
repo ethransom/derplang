@@ -38,10 +38,16 @@ typedef struct {
 	char* name;
 } NLookup;
 
+// TODO: There's some duplication here. Remove?
 typedef struct {
 	struct nExpression* expr;
 	ExprList* block;
 } NIfStructure;
+
+typedef struct {
+	struct nExpression* expr;
+	ExprList* block;
+} NWhileStructure;
 
 // typedef struct {
 // 	char* name;
@@ -65,6 +71,7 @@ typedef enum {
 	NBINARYOP,
 	NLOOKUP,
 	NIFSTRUCTURE,
+	NWHILESTRUCTURE,
 	// NFORSTRUCTURE
 	NFUNCDEF
 } ExprType;
@@ -81,6 +88,7 @@ typedef struct nExpression {
 		NBinaryOp binary_op;
 		NLookup lookup;
 		NIfStructure if_structure;
+		NWhileStructure while_structure;
 		// NForStructure for_structure;
 		NFuncDef func_def;
 	};

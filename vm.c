@@ -19,6 +19,8 @@ error:
 }
 
 bool vm_stack_push(Cream_vm* vm, Cream_obj* obj) {
+	debug("Pushing stack...");
+
 	if (vm->stack_len >= VM_STACK_HEIGHT) {
 		log_err("Stack overflow!");
 		return false;
@@ -31,6 +33,8 @@ bool vm_stack_push(Cream_vm* vm, Cream_obj* obj) {
 }
 
 Cream_obj* vm_stack_pop(Cream_vm* vm) {
+	debug("Popping stack...");
+
 	if (vm->stack_len <= 0) {
 		log_err("Stack underflow!");
 		return NULL;
@@ -363,9 +367,9 @@ void cream_vm_run(Cream_vm *vm) {
 			}
 				break;
 			case CODE_JUMP: {
-				int num = atoi(bytecode->arg1);
-				debug("jumping %d", num);
-				pointer += num;
+				debug("jumping to %d", bytecode->arg2);
+				pointer = bytecode->arg2;
+				pointer -= 1; // the for loop immediately increments
 			}
 				break;
 			// case CODE_REPEAT:

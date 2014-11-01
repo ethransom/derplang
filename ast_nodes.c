@@ -62,6 +62,13 @@ void ast_exp_print(NExpression* expr, int indent) {
 				treeprintf(indent + 1, "block:\n");
 					ast_list_print(expr->if_structure.block, indent + 1);
 			break;
+		case NWHILESTRUCTURE:
+			treeprintf(indent, "NWhileStructure\n");
+				treeprintf(indent + 1, "expr:\n");
+					ast_exp_print(expr->while_structure.expr, indent + 1);
+				treeprintf(indent + 1, "block:\n");
+					ast_list_print(expr->while_structure.block, indent + 1);
+			break;
 		case NFUNCDEF:
 			treeprintf(indent, "NFuncDef name: %s\n", expr->func_def.name);
 				treeprintf(indent + 1, "args:\n");
@@ -109,6 +116,10 @@ void ast_expr_free(NExpression* expr) {
 		case NIFSTRUCTURE:
 			ast_expr_free(expr->if_structure.expr);
 			ast_list_free(expr->if_structure.block);
+			break;
+		case NWHILESTRUCTURE:
+			ast_expr_free(expr->while_structure.expr);
+			ast_list_free(expr->while_structure.block);
 			break;
 		case NFUNCDEF: {
 			// free(expr->func_def.name);
@@ -253,6 +264,24 @@ bool ast_expr_compile(NExpression* expr, List* output, file_blob_t* blob) {
 			ast_list_compile(expr->if_structure.block, output, blob);
 
 			jump->arg2 = output->length - len_before_if;
+			break;
+		case NWHILESTRUCTURE: {
+			int len_before_while = output->length;
+
+			ast_expr_compile(expr->while_structure.expr, output, blob);
+
+			CODE(CODE_JUMP_IF_FALSE, NULL, 0, 0.0);
+			// keep a pointer to update once we know the body length
+			instr* jump = output->last->data;
+
+			int len_before_body = output->length;
+
+			ast_list_compile(expr->while_structure.block, output, blob);
+
+			CODE(CODE_JUMP, NULL, len_before_while, 0.0);
+
+			jump->arg2 = output->length - len_before_body;
+		}
 			break;
 		case NFUNCDEF: {
 			List list;
