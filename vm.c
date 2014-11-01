@@ -260,7 +260,7 @@ void cream_vm_run(Cream_vm *vm) {
 	// start at the first instruction of the first function
 	fn_blob_t* cur_fn = vm->blob->fns[0];
 	size_t pointer = 0;
-	for (pointer = 0; pointer < cur_fn->blob_len; pointer++) {
+	while (pointer < cur_fn->blob_len) {
 		instr* bytecode = &cur_fn->blob[pointer];
 
 		debug("code: %s @ %zd",
@@ -320,9 +320,9 @@ void cream_vm_run(Cream_vm *vm) {
 
 					debug("jumping to func: '%s'", identifier);
 					// when the loop restarts, pointer gets incremented to 1
-					pointer = -1;
+					pointer = 0;
 					cur_fn = fn;
-					break;
+					continue;
 				}
 
 				// check stdlib functions
@@ -381,7 +381,7 @@ void cream_vm_run(Cream_vm *vm) {
 			case CODE_JUMP: {
 				debug("jumping to %d", bytecode->arg2);
 				pointer = bytecode->arg2;
-				pointer -= 1; // the for loop immediately increments
+				continue;
 			}
 				break;
 			// case CODE_REPEAT:
@@ -397,6 +397,8 @@ void cream_vm_run(Cream_vm *vm) {
 		}
 
 		check(!vm->err, "error on line %zd", pointer);
+
+		pointer++;
 	}
 
 	return;
