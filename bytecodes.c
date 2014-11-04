@@ -10,6 +10,7 @@ char Cream_code_names[][16] = {
     "PUSH_FLOAT",
     "PUSH_STR",
     "PUSH_BOOL",
+    "PUSH_ARRAY",
 
     // mathematical and logical operations
     "ADD",

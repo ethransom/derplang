@@ -24,6 +24,15 @@ err_t* cream_stdlib_print(int argc, Cream_obj** argv) {
 			case TYPE_STRING:
 				printf("%s", data->str_val);
 				break;
+			case TYPE_ARRAY:
+				putchar('[');
+				for (int i = 0; i < data->arr_val.len; ++i) {
+					if (i != 0) putchar(',');
+					err_t* err = cream_stdlib_print(1, &data->arr_val.vec[i]);
+					if (err != NULL) return err;
+				}
+				putchar(']');
+				break;
 			case TYPE_INTEGER:
 				printf("%d", data->int_val);
 				break;

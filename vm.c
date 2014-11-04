@@ -247,6 +247,10 @@ void vm_gc_mark(Cream_vm* vm) {
 			obj->marked = true;
 		}
 	}
+	for (int i = 0; i < vm->stack_len; ++i) {
+		debug("marking stack[%d]", i);
+		vm->stack[i]->marked = true;
+	}
 }
 
 
@@ -283,6 +287,23 @@ void cream_vm_run(Cream_vm *vm) {
 				break;
 			case CODE_PUSH_BOOL:
 				vm_push_bool(vm, bytecode->arg2);
+				break;
+			case CODE_PUSH_ARRAY: {
+				Cream_obj* obj = object_create(vm);
+				obj->type = TYPE_ARRAY;
+
+				vm->stack_len -= bytecode->arg2;
+				Cream_obj** stack_slice = vm->stack + vm->stack_len;
+
+				size_t size = sizeof(Cream_obj*) * bytecode->arg2;
+				Cream_obj** vec = malloc(size);
+				memcpy(vec, stack_slice, size);
+
+				obj->arr_val.vec = vec;
+				obj->arr_val.len = bytecode->arg2;
+
+				vm_stack_push(vm, obj); // push before we mess with the stack!
+			}
 				break;
 
 			// ================== MATHEMATICAL OPERATIONS =================== //

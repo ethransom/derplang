@@ -41,6 +41,11 @@ void ast_exp_print(NExpression* expr, int indent) {
 		case NBOOL:
 			treeprintf(indent, "bool val: %s\n", expr->tbool ? "true" : "false");
 			break;
+		case NARRAY:
+			treeprintf(indent, "NArray length: %d\n", expr->array->length);
+				treeprintf(indent + 1, "elem:\n");
+					ast_list_print(expr->array, indent + 1);
+			break;
 		case NCALL:
 			treeprintf(indent, "NCall name: %s, args:\n", expr->call.name);
 			ast_list_print(expr->call.args, indent);
@@ -101,6 +106,9 @@ void ast_expr_free(NExpression* expr) {
 		case NASSIGNMENT:
 			// free(expr->assignment.name);
 			ast_expr_free(expr->assignment.val);
+			break;
+		case NARRAY:
+			ast_list_free(expr->array);
 			break;
 		case NCALL:
 			// free(expr->call.name);
@@ -218,6 +226,10 @@ bool ast_expr_compile(NExpression* expr, List* output, file_blob_t* blob) {
 			break;
 		case NBOOL:
 			CODE(CODE_PUSH_BOOL, NULL, expr->tbool, 0.0);
+			break;
+		case NARRAY:
+			ast_list_compile(expr->array, output, blob);
+			CODE(CODE_PUSH_ARRAY, NULL, expr->array->length, 0.0);
 			break;
 		case NCALL:
 			check(ast_list_compile(expr->call.args, output, blob), "NCALL couldn't compile!");

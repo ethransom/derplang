@@ -16,6 +16,7 @@ typedef enum {
     CODE_PUSH_FLOAT,
     CODE_PUSH_STR,
     CODE_PUSH_BOOL,
+    CODE_PUSH_ARRAY,
 
     // mathematical and logical operations
     CODE_ADD,

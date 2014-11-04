@@ -67,6 +67,7 @@ typedef enum {
 	NDOUBLE,
 	NSTRING,
 	NBOOL,
+	NARRAY,
 	NCALL,
 	NBINARYOP,
 	NLOOKUP,
@@ -84,6 +85,7 @@ typedef struct nExpression {
 		double tdouble;
 		char* string;
 		bool tbool;
+		ExprList* array;
 		NCall call;
 		NBinaryOp binary_op;
 		NLookup lookup;

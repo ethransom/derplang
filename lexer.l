@@ -38,6 +38,8 @@
 ")"                     return TOKEN(TRPAREN);
 "{"                     return TOKEN(TLBRACE);
 "}"                     return TOKEN(TRBRACE);
+"["                     return TOKEN(TLBRACK);
+"]"                     return TOKEN(TRBRACK);
 "."                     return TOKEN(TDOT);
 ","                     return TOKEN(TCOMMA);
 "+"                     return TOKEN(TPLUS);

@@ -49,7 +49,7 @@ ExprList *programBlock; /* the top level root node of our final AST */
 %token <string> TIDENTIFIER TINTEGER TDOUBLE TSTRING
 %token <token> TKEYWORDIF TKEYWORDFUNCDEF TKEYWORDWHILE TTRUE TFALSE
 %token <token> TCEQ TCNE TCLT TCLE TCGT TCGE TEQUAL
-%token <token> TLPAREN TRPAREN TLBRACE TRBRACE TCOMMA TDOT
+%token <token> TLPAREN TRPAREN TLBRACE TRBRACE TLBRACK TRBRACK TCOMMA TDOT
 %token <token> TPLUS TMINUS TMUL TDIV
 
 /* Define the type of node our nonterminal symbols represent.
@@ -122,6 +122,7 @@ literal : TINTEGER { $$ = ast_expr_new(NINTEGER); $$->integer = atol($1); free($
         | TSTRING  { $$ = ast_expr_new(NSTRING);  $$->string = $1; }
         | TTRUE    { $$ = ast_expr_new(NBOOL);    $$->tbool = true; }
         | TFALSE   { $$ = ast_expr_new(NBOOL);    $$->tbool = false; }
+        | TLBRACK call_args TRBRACK { $$ = ast_expr_new(NARRAY); $$->array = $2; }
         ;
 
 expr : TIDENTIFIER TLPAREN call_args TRPAREN { $$ = ast_expr_new(NCALL); $$->call.name = $1; $$->call.args = $3; /*delete $3;*/ }
