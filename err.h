@@ -10,6 +10,7 @@ typedef struct {
 err_t InternalErr;
 err_t LookupErr;
 err_t TypeErr;
+err_t ArgErr;
 
 void err_print(err_t* err);
 

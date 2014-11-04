@@ -57,7 +57,7 @@ typedef struct {
   List* std_lib;
 } Cream_vm;
 
-typedef err_t* (*Cream_native_fn)(int argc, Cream_obj** argv);
+typedef err_t* (*Cream_native_fn)(Cream_vm* vm, int argc, Cream_obj** argv);
 
 typedef struct {
   char* name;
@@ -65,6 +65,8 @@ typedef struct {
 } Cream_native;
 
 #include "stdlib.h"
+
+void vm_push_int(Cream_vm *vm, int i);
 
 /* allocates and initializes a vm, then returns a pointer to it */
 Cream_vm* cream_vm_create();

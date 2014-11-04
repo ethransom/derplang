@@ -113,7 +113,7 @@ error:
 // push various types to the stack
 // TODO: move `Cream_obj` creation to `object.c` to allow for memory mgmt.
 // returns true if successful, false if not
-static void vm_push_int(Cream_vm *vm, int i) {
+void vm_push_int(Cream_vm *vm, int i) {
 	Cream_obj* data = object_create(vm);
 	data->type = TYPE_INTEGER;
 	data->int_val = i;
@@ -162,6 +162,7 @@ Cream_vm* cream_vm_create() {
 
 	cream_add_native(vm, "println", cream_stdlib_println);
 	cream_add_native(vm, "print", cream_stdlib_print);
+	cream_add_native(vm, "len", cream_stdlib_len);
 
 	return vm;
 error:
@@ -226,7 +227,7 @@ bool cream_run_native(Cream_vm* vm, char* name, int argc) {
 			vm->stack_len -= argc; // destructive, because fn call pops the stack
 			Cream_obj** stack_slice = vm->stack + vm->stack_len;
 
-			native->fn(argc, stack_slice);
+			native->fn(vm, argc, stack_slice);
 			return true;
 		}
 	}

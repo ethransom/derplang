@@ -7,7 +7,7 @@
 #include "object.h"
 
 Cream_obj** heap = NULL;
-size_t heap_size = 4;
+size_t heap_size = 8;
 int next_free_slot = 0;
 
 void object_init(Cream_obj* obj) {

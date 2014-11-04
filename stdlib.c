@@ -4,8 +4,8 @@
 
 #include "stdlib.h"
 
-err_t* cream_stdlib_println(int argc, Cream_obj** argv) {
-	err_t* err = cream_stdlib_print(argc, argv);
+err_t* cream_stdlib_println(Cream_vm* vm, int argc, Cream_obj** argv) {
+	err_t* err = cream_stdlib_print(vm, argc, argv);
 
 	if (err == NULL) {
 		printf("\n");
@@ -14,7 +14,7 @@ err_t* cream_stdlib_println(int argc, Cream_obj** argv) {
 	return err;
 }
 
-err_t* cream_stdlib_print(int argc, Cream_obj** argv) {
+err_t* cream_stdlib_print(Cream_vm* vm, int argc, Cream_obj** argv) {
 	for (int i = 0; i < argc; i++) {
 		Cream_obj* data = argv[i];
 
@@ -28,7 +28,7 @@ err_t* cream_stdlib_print(int argc, Cream_obj** argv) {
 				putchar('[');
 				for (int i = 0; i < data->arr_val.len; ++i) {
 					if (i != 0) putchar(',');
-					err_t* err = cream_stdlib_print(1, &data->arr_val.vec[i]);
+					err_t* err = cream_stdlib_print(vm, 1, &data->arr_val.vec[i]);
 					if (err != NULL) return err;
 				}
 				putchar(']');
@@ -55,4 +55,27 @@ err_t* cream_stdlib_print(int argc, Cream_obj** argv) {
 
 error:
 	return err_create(&InternalErr, NULL);
+}
+
+err_t* cream_stdlib_len(Cream_vm* vm, int argc, Cream_obj** argv) {
+	if (argc != 1) 
+		return err_create(&ArgErr, "len() takes exactly one argument");
+
+	Cream_obj* data = argv[0];
+	int len;
+
+	switch (data->type) {
+		case TYPE_STRING:
+			len = strlen(data->str_val);
+			break;
+		case TYPE_ARRAY:
+			len = data->arr_val.len;
+			break;
+		default:
+			return err_create(&ArgErr, "couldn't find len of given object");
+	}
+
+	vm_push_int(vm, len);
+
+	return NULL;
 }

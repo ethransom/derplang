@@ -6,6 +6,7 @@
 err_t InternalErr = {"RuntimeErr",  NULL, NULL, 0};
 err_t LookupErr   = {"LookupErr",   NULL, NULL, 0};
 err_t TypeErr     = {"TypeErr",     NULL, NULL, 0};
+err_t ArgErr      = {"ArgErr",      NULL, NULL, 0};
 
 void err_print(err_t* err) {
 	printf("%s: %s (%s:%d)\n", err->name, err->msg, err->file, err->line);
