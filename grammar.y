@@ -67,7 +67,8 @@ ExprList *programBlock; /* the top level root node of our final AST */
 // %type <stmt> stmt
 %type <expr_list> stmts call_args block
 // %type <stmts> stmt
-%type <expression> var_assign stmt expr literal ident if_structure func_decl while_structure
+%type <expression> var_assign stmt expr literal ident if_structure
+%type <expression> func_decl anon_func_decl while_structure
 %type <token> comparison
 
 /* Operator precedence for mathematical operators */
@@ -109,6 +110,8 @@ func_decl :  TKEYWORDFUNCDEF TIDENTIFIER TLPAREN func_decl_args TRPAREN block
             { $$ = ast_expr_new(NFUNCDEF); $$->func_def.name = $2; $$->func_def.arg_list = $4; $$->func_def.block = $6; /*delete $4;*/ }
           ;
 
+anon_func_decl : TKEYWORDFUNCDEF TLPAREN func_decl_args TRPAREN block { $$ = ast_expr_new(NANONFUNCDEF); $$->anon_func_def.arg_list = $3; $$->anon_func_def.block = $5;}
+
 func_decl_args : /*blank*/  { $$ = List_create(); }
           | TIDENTIFIER { $$ = List_create(); List_push($$, $1); }
           | func_decl_args TCOMMA TIDENTIFIER { List_push($1, $3); }
@@ -133,6 +136,7 @@ expr : TIDENTIFIER TLPAREN call_args TRPAREN { $$ = ast_expr_new(NCALL); $$->cal
      						  $$->binary_op.op 	  = $2;
      						  $$->binary_op.right = $3; }
      | TLPAREN expr TRPAREN { $$ = $2; }
+     | anon_func_decl
      ;
 
 call_args : /*blank*/  { $$ = List_create(); }

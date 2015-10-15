@@ -1,0 +1,732 @@
+--------------------------------------------------------------------------------
+Profile data file 'callgrind.out.8444' (creator: callgrind-3.10.1)
+--------------------------------------------------------------------------------
+I1 cache: 
+D1 cache: 
+LL cache: 
+Timerange: Basic block 0 - 3949481573
+Trigger: Program termination
+Profiled target:  ./main bench.cream (PID 8444, part 1)
+Events recorded:  Ir
+Events shown:     Ir
+Event sort order: Ir
+Thresholds:       99
+Include dirs:     
+User annotated:   
+Auto-annotation:  on
+
+--------------------------------------------------------------------------------
+            Ir 
+--------------------------------------------------------------------------------
+20,219,807,002  PROGRAM TOTALS
+
+--------------------------------------------------------------------------------
+           Ir  file:function
+--------------------------------------------------------------------------------
+3,569,779,346  vm.c:cream_vm_run [/home/ethan/Projects/cream/main]
+3,230,686,386  ???:_int_malloc [/usr/lib/libc-2.20.so]
+1,639,514,014  vm.c:vm_stack_push [/home/ethan/Projects/cream/main]
+1,582,978,992  vm.c:vm_stack_pop [/home/ethan/Projects/cream/main]
+1,356,839,160  ???:__strcmp_ssse3 [/usr/lib/libc-2.20.so]
+1,324,538,703  ???:malloc [/usr/lib/libc-2.20.so]
+1,243,771,012  ???:_int_free [/usr/lib/libc-2.20.so]
+1,207,425,089  object.c:object_sweep [/home/ethan/Projects/cream/main]
+1,114,546,482  map.c:_Map_get_node [/home/ethan/Projects/cream/main]
+1,058,011,413  vm.c:vm_arithmetic [/home/ethan/Projects/cream/main]
+  682,457,966  object.c:object_create [/home/ethan/Projects/cream/main]
+  411,897,607  map.c:Map_get [/home/ethan/Projects/cream/main]
+  355,362,656  vm.c:vm_push_int [/home/ethan/Projects/cream/main]
+  351,324,357  vm.c:vm_gc_mark [/home/ethan/Projects/cream/main]
+  282,674,805  object.c:object_heap_dump [/home/ethan/Projects/cream/main]
+  258,445,504  object.c:object_destroy [/home/ethan/Projects/cream/main]
+  242,293,050  ???:free [/usr/lib/libc-2.20.so]
+  161,528,560  map.c:Map_set [/home/ethan/Projects/cream/main]
+
+--------------------------------------------------------------------------------
+-- Auto-annotated source: vm.c
+--------------------------------------------------------------------------------
+         Ir 
+
+          .  #include <stdio.h>
+          .  
+          .  #include "vm.h"
+          .  
+          6  fn_blob_t* file_blob_add_fn(file_blob_t* blob, char* name, fn_type_t type) {
+          4  	check(blob->fn_c < 4, "file_blob_t is full!");
+          .  
+          4  	fn_blob_t* fn = malloc(sizeof(fn_blob_t));
+        189  => ???:malloc (1x)
+          2  	check_mem(fn);
+          3  	fn->name = name;
+          3  	fn->type = type;
+          2  	if (type == FN_BYTECODE) {
+          2  		fn->bytecode.blob = NULL;
+          3  		fn->bytecode.blob_len = 0;
+          .  	} else {
+          .  		log_warn("unknown fn_blob_t type");
+          .  	}
+          .  
+          5  	blob->fns[blob->fn_c] = fn;
+          5  	blob->fn_c++;
+          .  
+          2  	return fn;
+          .  
+          .  error:
+          .  	return NULL;
+          2  }
+          .  
+          .  void file_blob_print(file_blob_t* blob) {
+          .  	printf("'%s' has %zd functions\n", blob->name, blob->fn_c);
+          .  	for (int i = 0; i < blob->fn_c; i++) {
+          .  		fn_blob_t* fn = blob->fns[i];
+          .  
+          .  		switch (fn->type) {
+          .  			case FN_BYTECODE:
+-- line 34 ----------------------------------------
+-- line 43 ----------------------------------------
+          .  
+          .  		printf("END FUNC %s\n", blob->name);
+          .  	}
+          .  }
+          .  
+          .  //============================== HELPER FUNCTIONS ==============================
+          .  // marked as static and not forward-declared in the header so as to be private
+          .  
+          4  static Stack_frame* vm_add_stack_frame(Cream_vm* vm) {
+          4  	Stack_frame* frame = malloc(sizeof(Stack_frame));
+        189  => ???:malloc (1x)
+          2  	check_mem(frame);
+          3  	Map* symbol_table = Map_create();
+        209  => /home/ethan/Projects/cream/map.c:Map_create (1x)
+          3  	frame->symbol_table = symbol_table;
+          6  	List_push(vm->call_stack, frame);
+        223  => /home/ethan/Projects/cream/list.c:List_push (1x)
+          2  	return frame;
+          .  error:
+          .  	log_err("OUT OF MEMR");
+          .  	return NULL;
+          2  }
+          .  
+282,674,830  bool vm_stack_push(Cream_vm* vm, Cream_obj* obj) {
+169,604,898  	debug("Pushing stack...");
+          .  
+226,139,864  	if (vm->stack_len >= VM_STACK_HEIGHT) {
+          .  		log_err("Stack overflow!");
+          .  		return false;
+          .  	}
+          .  
+508,814,694  	vm->stack[vm->stack_len] = obj;
+282,674,830  	vm->stack_len++;
+          .  
+ 56,534,966  	return true;
+113,069,932  }
+          .  
+226,139,856  Cream_obj* vm_stack_pop(Cream_vm* vm) {
+169,604,892  	debug("Popping stack...");
+          .  
+226,139,856  	if (vm->stack_len <= 0) {
+          .  		log_err("Stack underflow!");
+          .  		return NULL;
+          .  	}
+          .  
+282,674,820  	vm->stack_len -= 1;
+508,814,676  	Cream_obj* obj = vm->stack[vm->stack_len];
+          .  
+ 56,534,964  	return obj;
+113,069,928  }
+          .  
+          .  Stack_frame* vm_call_stack_pop(Cream_vm* vm) {
+          .  	Stack_frame* last_frame = List_pop(vm->call_stack);
+          .  	if (last_frame == NULL) return NULL;
+          .  
+          .  	Map_destroy(last_frame->symbol_table);
+          .  
+          .  	return last_frame;
+          .  }
+          .  
+          .  /*
+          .   * Perform the arithmetic operation indicated by optype
+          .   * Pushes the result of the operation to the stack
+          .  */
+          .  // TODO: potentially inline?
+ 80,764,230  static void vm_arithmetic(Cream_vm* vm, Vm_arithmetic_optype optype) {
+ 64,611,384  	Cream_obj* right = vm_stack_pop(vm);
+452,279,688  => vm.c:vm_stack_pop (16152846x)
+ 64,611,384  	Cream_obj* left = vm_stack_pop(vm);
+452,279,688  => vm.c:vm_stack_pop (16152846x)
+ 64,611,384  	check(right->type == TYPE_INTEGER, "Expected integer");
+ 64,611,384  	check(left->type == TYPE_INTEGER, "Expected integer");
+          .  
+ 48,458,538  	int r = right->int_val;
+ 48,458,538  	int l = left->int_val;
+          .  
+ 64,611,384  	Cream_obj* result = malloc(sizeof(Cream_obj));
+2,277,642,572  => ???:malloc (16152846x)
+ 32,305,692  	check_mem(result);
+          .  
+ 64,611,384  	if (optype == OP_ADD || optype == OP_SUB ||
+ 16,152,846  		optype == OP_MUL || optype == OP_DIV) {
+          .  
+ 24,229,269  		debug("performing arithmetic operation on %d and %d", l, r);
+ 24,229,269  		result->type = TYPE_INTEGER;
+          .  	} else {
+ 24,229,269  		debug("performing comparison operation on %d and %d", l, r);
+ 16,152,846  		result->type = TYPE_BOOLEAN;
+          .  	}
+          .  
+ 80,764,230  	switch (optype) {
+ 48,458,538  		case OP_ADD:		result->int_val = l + r; break;
+          .  		case OP_SUB:		result->int_val = l - r; break;
+          .  		case OP_MUL:		result->int_val = l * r; break;
+          .  		case OP_DIV:		result->int_val = l / r; break;
+          .  
+          .  		case OP_CMP_EQ:		result->bool_val = (l == r); break;
+          .  		case OP_CMP_NEQ:	result->bool_val = (l != r); break;
+          .  		case OP_CMP_LT:		result->bool_val = (l <  r); break;
+          .  		case OP_CMP_LT_EQ:	result->bool_val = (l <= r); break;
+ 48,458,538  		case OP_CMP_GT:		result->bool_val = (l >  r); break;
+          .  		case OP_CMP_GT_EQ:	result->bool_val = (l >= r); break;
+          .  
+          .  		default: sentinel("encountered unknown optype");
+          .  	}
+          .  
+ 48,458,538  	debug("result of operation: b: %d i: %d", result->bool_val, result->int_val);
+          .  
+ 80,764,230  	vm_stack_push(vm, result);
+468,432,534  => vm.c:vm_stack_push (16152846x)
+          .  	// free(right);
+          .  	// free(left);
+          .  
+ 16,152,846  	return;
+          .  
+          .  error:
+          .  	vm->err = err_create(&InternalErr, NULL);
+ 32,305,692  }
+          .  
+          .  // =========== PUSH HELPERS ========== //
+          .  // push various types to the stack
+          .  // TODO: move `Cream_obj` creation to `object.c` to allow for memory mgmt.
+          .  // returns true if successful, false if not
+ 80,764,240  void vm_push_int(Cream_vm *vm, int i) {
+ 80,764,240  	Cream_obj* data = object_create(vm);
+6,691,428,093  => /home/ethan/Projects/cream/object.c:object_create (16152848x)
+ 32,305,696  	data->type = TYPE_INTEGER;
+ 48,458,544  	data->int_val = i;
+ 80,764,240  	vm_stack_push(vm, data);
+468,432,592  => vm.c:vm_stack_push (16152848x)
+ 32,305,696  }
+          .  static void vm_push_float(Cream_vm *vm, float f) {
+          .  	Cream_obj* data = object_create(vm);
+          .  	data->type = TYPE_FLOAT;
+          .  	data->float_val = f;
+          .  	vm_stack_push(vm, data);
+          .  }
+          .  static void vm_push_str(Cream_vm *vm, char* s) {
+          .  	Cream_obj* data = object_create(vm);
+          .  	data->type = TYPE_STRING;
+          .  	data->str_val = strdup(s);
+          .  	vm_stack_push(vm, data);
+          .  }
+          6  static void vm_push_bool(Cream_vm *vm, bool b) {
+          5  	Cream_obj* data = object_create(vm);
+        449  => /home/ethan/Projects/cream/object.c:object_create (1x)
+          2  	data->type = TYPE_BOOLEAN;
+          3  	data->bool_val = b;
+          5  	vm_stack_push(vm, data);
+         29  => vm.c:vm_stack_push (1x)
+          2  }
+          .  
+          3  Cream_vm* cream_vm_create() {
+          .  	// puts("cream obj created");
+          8  	Cream_vm *vm = malloc(sizeof(Cream_vm));
+      1,095  => ???:_dl_runtime_resolve (1x)
+        189  => ???:malloc (1x)
+          2  	check_mem(vm);
+          .  
+          6  	vm->stack = malloc(VM_STACK_HEIGHT * sizeof(Cream_obj*));
+        174  => ???:malloc (1x)
+          4  	check_mem(vm->stack);
+          .  
+          5  	vm->call_stack = List_create();
+        215  => /home/ethan/Projects/cream/list.c:List_create (1x)
+          4  	check_mem(vm->call_stack);
+          5  	check_mem(vm_add_stack_frame(vm));
+        647  => vm.c:vm_add_stack_frame (1x)
+          .  
+          5  	vm->func_map = Map_create();
+        209  => /home/ethan/Projects/cream/map.c:Map_create (1x)
+          4  	check_mem(vm->func_map);
+          3  	vm->func_map->not_found_val = (void*) -1;
+          .  
+          2  	vm->blob = NULL;
+          2  	vm->err = false;
+          .  
+          5  	vm->std_lib = List_create();
+        215  => /home/ethan/Projects/cream/list.c:List_create (1x)
+          4  	check_mem(vm->std_lib);
+          .  
+          5  	cream_add_native(vm, "println", cream_stdlib_println);
+        439  => vm.c:cream_add_native (1x)
+          5  	cream_add_native(vm, "print", cream_stdlib_print);
+        443  => vm.c:cream_add_native (1x)
+          5  	cream_add_native(vm, "len", cream_stdlib_len);
+        443  => vm.c:cream_add_native (1x)
+          .  
+          2  	return vm;
+          .  error:
+          .  	return NULL;
+          2  }
+          .  
+          .  void cream_vm_destroy(Cream_vm *vm) {
+          .  	// puts("cream vm destroyed");
+          .  	check(vm != NULL, "VM is already destroyed!");
+          .  
+          .  	{
+          .  		// LIST_FOREACH(vm->stack, first, next, cur) free(cur->data);
+          .  	}
+-- line 221 ----------------------------------------
+-- line 241 ----------------------------------------
+          .  	}
+          .  	List_destroy(vm->std_lib);
+          .  
+          .  	free(vm);
+          .  error:
+          .  	return;
+          .  }
+          .  
+         18  void cream_add_native(Cream_vm* vm, char* name, Cream_native_fn fn) {
+         12  	Cream_native* native = malloc(sizeof(Cream_native));
+        567  => ???:malloc (3x)
+          6  	check_mem(native);
+          .  
+          9  	native->name = name;
+          9  	native->fn = fn;
+          .  
+         18  	List_push(vm->std_lib, (void*) native);
+        677  => /home/ethan/Projects/cream/list.c:List_push (3x)
+          .  
+          .  error:
+          3  	return;
+          6  }
+          .  
+          .  bool cream_run_native(Cream_vm* vm, char* name, int argc) {
+          .  	check(name != NULL, "Given NULL as a name!");
+          .  	debug("Searching for '%s'...", name);
+          .  	LIST_FOREACH(vm->std_lib, first, next, cur) {
+          .  		Cream_native* native = cur->data;
+          .  		debug("comparing '%s' and '%s'...", native->name, name);
+          .  		if (strcmp(native->name, name) == 0) {
+-- line 268 ----------------------------------------
+-- line 275 ----------------------------------------
+          .  		}
+          .  	}
+          .  
+          .  error:
+          .  	return false;
+          .  }
+          .  
+          .  // recurse over stack frames, marking all the objects in the symbol table
+ 16,152,844  void vm_gc_mark(Cream_vm* vm) {
+ 12,114,633  	debug("beginning GC mark");
+ 72,687,798  	LIST_FOREACH(vm->call_stack, first, next, cur) {
+ 12,114,633  		Stack_frame* frame = cur->data;
+ 12,114,633  		Map* table = frame->symbol_table;
+ 64,611,376  		for (struct MapNode* node = table->first; node != NULL; node = node->next) {
+ 24,229,266  			debug("marking %s", node->key);
+ 24,229,266  			Cream_obj* obj = node->data;
+ 16,152,844  			obj->marked = true;
+          .  		}
+          .  	}
+ 44,420,321  	for (int i = 0; i < vm->stack_len; ++i) {
+ 12,114,633  		debug("marking stack[%d]", i);
+ 32,305,688  		vm->stack[i]->marked = true;
+          .  	}
+  8,076,422  }
+          .  
+          .  
+          6  void cream_vm_run(Cream_vm *vm) {
+          3  	debug("beginning execution...");
+          .  
+          5  	check(vm->blob->fn_c > 0, "file was empty?");
+          .  
+          .  	// start at the first instruction of the first function
+          4  	fn_blob_t* cur_fn = vm->blob->fns[0];
+          1  	size_t pointer = 0;
+355,362,649  	while (pointer < cur_fn->bytecode.blob_len) {
+533,043,972  		instr* bytecode = &cur_fn->bytecode.blob[pointer];
+          .  
+266,521,986  		debug("code: %s @ %zd",
+          .  			code_type_to_str(bytecode->code),
+          .  			pointer
+          .  		);
+          .  
+621,884,634  		switch (bytecode->code) {
+          .  			case CODE_PUSH:
+          .  				sentinel("CODE_PUSH is no good!");
+          .  				break;
+          .  			case CODE_PUSH_INT:
+ 96,917,088  				vm_push_int(vm, bytecode->arg2);
+7,515,223,341  => vm.c:vm_push_int (16152848x)
+ 16,152,848  				break;
+          .  			case CODE_PUSH_FLOAT:
+          .  				vm_push_float(vm, bytecode->float_val);
+          .  				break;
+          .  			case CODE_PUSH_STR:
+          .  				vm_push_str(vm, bytecode->arg1);
+          .  				break;
+          .  			case CODE_PUSH_BOOL:
+          9  				vm_push_bool(vm, bytecode->arg2);
+        501  => vm.c:vm_push_bool (1x)
+          1  				break;
+          .  			case CODE_PUSH_ARRAY: {
+          .  				Cream_obj* obj = object_create(vm);
+          .  				obj->type = TYPE_ARRAY;
+          .  
+          .  				vm->stack_len -= bytecode->arg2;
+          .  				Cream_obj** stack_slice = vm->stack + vm->stack_len;
+          .  
+          .  				size_t size = sizeof(Cream_obj*) * bytecode->arg2;
+-- line 340 ----------------------------------------
+-- line 344 ----------------------------------------
+          .  				obj->arr_val.vec = vec;
+          .  				obj->arr_val.len = bytecode->arg2;
+          .  
+          .  				vm_stack_push(vm, obj); // push before we mess with the stack!
+          .  			}
+          .  				break;
+          .  
+          .  			// ================== MATHEMATICAL OPERATIONS =================== //
+ 40,382,119  			case CODE_ADD:	vm_arithmetic(vm, OP_ADD); break;
+2,334,131,889  => vm.c:vm_arithmetic (8076424x)
+          .  			case CODE_SUB:	vm_arithmetic(vm, OP_SUB); break;
+          .  			case CODE_MUL:	vm_arithmetic(vm, OP_MUL); break;
+          .  			case CODE_DIV:	vm_arithmetic(vm, OP_DIV); break;
+          .  
+          .  			// ================== COMPARISON OPERATIONS =================== //
+          .  			case CODE_CMP_EQ:		vm_arithmetic(vm, OP_CMP_EQ); break;
+          .  			case CODE_CMP_NEQ:		vm_arithmetic(vm, OP_CMP_NEQ); break;
+          .  			case CODE_CMP_LT:		vm_arithmetic(vm, OP_CMP_LT); break;
+          .  			case CODE_CMP_LT_EQ:	vm_arithmetic(vm, OP_CMP_LT_EQ); break;
+ 40,382,115  			case CODE_CMP_GT:		vm_arithmetic(vm, OP_CMP_GT); break;
+2,374,514,006  => vm.c:vm_arithmetic (8076423x)
+          .  			case CODE_CMP_GT_EQ:	vm_arithmetic(vm, OP_CMP_GT_EQ); break;
+          .  
+          .  			case CODE_CALL: {
+          .  				char* identifier = bytecode->arg1;
+          .  				int argc = bytecode->arg2;
+          .  
+          .  				debug("'%d' arg call to '%s'", argc, identifier);
+          .  
+-- line 370 ----------------------------------------
+-- line 392 ----------------------------------------
+          .  				bool success = cream_run_native(vm, identifier, argc);
+          .  
+          .  				if (success == false) {
+          .  					vm->err = err_create(&LookupErr, "foobar"); // "unknown function: '%s'", identifier);
+          .  				}
+          .  			}
+          .  				break;
+          .  			case CODE_PUSH_LOOKUP: {
+ 72,687,813  				debug("pushing contents of '%s' to stack", bytecode->arg1);
+121,146,355  				Stack_frame* frame = (Stack_frame*) vm->call_stack->last->data;
+193,834,168  				Cream_obj* data = Map_get(frame->symbol_table, bytecode->arg1);
+2,188,710,801  => /home/ethan/Projects/cream/map.c:Map_get (24229271x)
+121,146,355  				if (data == frame->symbol_table->not_found_val) {
+          .  					log_err("undefined variable '%s'", bytecode->arg1);
+          .  					vm->err = err_create(&LookupErr, "undefined variable");
+          .  				}
+121,146,355  				vm_stack_push(vm, data);
+702,648,859  => vm.c:vm_stack_push (24229271x)
+          .  			}
+ 24,229,271  				break;
+          .  			case CODE_ASSIGN: {
+ 24,229,275  				debug("assigning to %s", bytecode->arg1);
+ 32,305,700  				Cream_obj* data = vm_stack_pop(vm);
+226,139,900  => vm.c:vm_stack_pop (8076425x)
+ 40,382,125  				Stack_frame* frame = (Stack_frame*) vm->call_stack->last->data;
+ 64,611,400  				Map_set(frame->symbol_table, bytecode->arg1, data);
+856,102,421  => /home/ethan/Projects/cream/map.c:Map_set (8076425x)
+          .  			}
+  8,076,425  				break;
+          .  			case CODE_RET: {
+          .  				Stack_frame* last_frame = List_pop(vm->call_stack);
+          .  				debug("returning to %zd from %zd", last_frame->return_addr, pointer);
+          .  				pointer = last_frame->return_addr;
+          .  				cur_fn = last_frame->return_fn;
+          .  				
+          .  				Map_destroy(last_frame->symbol_table);
+          .  				free(last_frame);
+          .  			}
+          .  				break;
+          .  			case CODE_JUMP_IF_FALSE: {
+ 64,611,388  				Cream_obj* top = vm_stack_pop(vm);
+452,279,716  => vm.c:vm_stack_pop (16152847x)
+ 64,611,388  				if (top->type != TYPE_BOOLEAN) {
+          .  					log_err("don't know how to evaluate truthyness of non-boolean");
+          .  					vm->err = err_create(&TypeErr, "expected boolean");
+          .  					break;
+          .  				}
+          .  
+ 64,611,388  				if (top->bool_val) {
+ 24,229,272  					debug("found cond to be truthy, continuing");
+          .  				} else {
+ 24,229,269  					int num = bytecode->arg2;
+ 24,229,269  					debug("found cond to be falsy, jumping %d", num);
+ 24,229,269  					pointer += num;
+          .  				}
+          .  			}
+ 16,152,847  				break;
+          .  			case CODE_JUMP: {
+ 24,229,269  				debug("jumping to %d", bytecode->arg2);
+ 32,305,692  				pointer = bytecode->arg2;
+  8,076,423  				continue;
+          .  			}
+          .  				break;
+          .  			case CODE_NULL:
+          .  				break;
+          .  			default:
+          .  				sentinel("Unknown code: %s (%d)",
+          .  					code_type_to_str(bytecode->code),
+          .  					bytecode->code
+          .  				);
+          .  				break;
+          .  		}
+          .  
+323,056,952  		check(!vm->err, "error on line %zd", pointer);
+          .  
+ 80,764,238  		pointer++;
+          .  	}
+          .  
+          .  	return;
+          .  error:
+          .  	if (!vm->err) {
+          .  		// we crashed internally
+          .  		err_t* err = err_create(&InternalErr, "Something went wrong internally");
+          .  		err->line = pointer;
+-- line 470 ----------------------------------------
+
+--------------------------------------------------------------------------------
+-- Auto-annotated source: map.c
+--------------------------------------------------------------------------------
+         Ir 
+
+-- line 2 ----------------------------------------
+          .  #include <stdio.h>
+          .  #include <string.h>
+          .  #include <assert.h>
+          .  
+          .  #include "map.h"
+          .  
+          .  #include "debug.h"
+          .  
+          6  Map* Map_create() {
+          8  	Map *map = malloc(sizeof(Map));
+        378  => ???:malloc (2x)
+          4  	assert(map != NULL);
+          .  
+          4  	map->first = NULL;
+          4  	map->last = NULL;
+          4  	map->length = 0;
+          .  
+          4  	map->not_found_val = NULL;
+          .  
+          2  	return map;
+          4  }
+          .  
+          .  void Map_clear(Map* map) {
+          .  	if (map->length > 0) {
+          .  		struct MapNode *node = map->first;
+          .  
+          .  		for (int i = 0; i < map->length; i++) {
+          .  			struct MapNode *next = node->next;
+          .  			free(node);
+-- line 29 ----------------------------------------
+-- line 39 ----------------------------------------
+          .  void Map_destroy(Map *map) {
+          .  	assert(map != NULL);
+          .  
+          .  	Map_clear(map);
+          .  
+          .  	free(map);
+          .  }
+          .  
+161,528,480  void* _Map_get_node(Map* map, char* key) {
+314,980,531  	for (struct MapNode* node = map->first; node != NULL; node = node->next) {
+508,814,689  		if (strcmp(node->key, key) == 0) {
+      1,035  => ???:_dl_runtime_resolve (1x)
+1,356,839,160  => ???:__strcmp_ssse3 (56534965x)
+ 64,611,388  			return node;
+          .  		}
+          .  	}
+          .  
+          2  	return NULL;
+ 64,611,392  }
+          .  
+ 48,458,550  void Map_set(Map *map, char* key, void *data) {
+ 48,458,550  	struct MapNode* node = _Map_get_node(map, key);
+694,573,483  => map.c:_Map_get_node (8076425x)
+ 16,152,850  	if (node != NULL) {
+ 24,229,269  		node->data = data;
+  8,076,423  		return;
+          .  	}
+          .  
+          8  	node = malloc(sizeof(struct MapNode));
+        378  => ???:malloc (2x)
+          4  	assert(node != NULL);
+          .  
+          6  	node->data = data;
+          6  	node->key = key;
+          4  	node->next = NULL;
+          4  	node->prev = NULL;
+          .  
+          .  	// map is empty
+          8  	if (map->length == 0) {
+          3  		map->first = node;
+          4  		map->last = node;
+          .  	} else { // map is not empty
+          .  	// link nodes together
+          4  		map->last->next = node;
+          4  		node->prev = map->last;
+          .  
+          3  		map->last = node;
+          .  	}
+          .  
+         10  	map->length++;
+ 16,152,850  }
+          .  
+121,146,355  void* Map_get(Map* map, char* key) {
+145,375,626  	struct MapNode* node = _Map_get_node(map, key);
+1,776,813,194  => map.c:_Map_get_node (24229271x)
+          .  
+ 48,458,542  	if (node == NULL) return map->not_found_val;
+          .  
+ 48,458,542  	return node->data;
+ 48,458,542  }
+          .  
+          .  void* Map_del(Map *map, char* key) {
+          .  	sentinel("not yet implemented");
+          .  	// if (map->length == 0) {
+          .  	//   return NULL;
+          .  	// }
+          .  
+          .  	void *data = map->last->data;
+-- line 101 ----------------------------------------
+
+--------------------------------------------------------------------------------
+-- Auto-annotated source: object.c
+--------------------------------------------------------------------------------
+         Ir 
+
+-- line 5 ----------------------------------------
+          .  
+          .  #include "debug.h"
+          .  #include "object.h"
+          .  
+          .  Cream_obj** heap = NULL;
+          .  size_t heap_size = 8;
+          .  int next_free_slot = 0;
+          .  
+ 48,458,547  void object_init(Cream_obj* obj) {
+ 32,305,698  	obj->type = TYPE_OBJECT;
+          .  
+ 32,305,698  	obj->flags = 0;
+ 32,305,698  }
+          .  
+ 80,764,230  void object_heap_dump() {
+121,146,345  	debug("heap: %p %p %p %p", heap[0], heap[1], heap[2], heap[3]);
+ 80,764,230  }
+          .  
+ 64,611,396  Cream_obj* object_create(Cream_vm* vm) {
+ 48,458,547  	if (heap == NULL) {
+          3  		debug("allocating heap of size %zd (each object %zd bytes)", heap_size, sizeof(Cream_obj));
+          6  		heap = malloc(sizeof(Cream_obj*) * heap_size);
+        189  => ???:malloc (1x)
+         55  		for (int i = 0; i < heap_size; ++i)
+          .  		{
+         48  			heap[i] = NULL;
+          .  		}
+          .  	}
+          .  
+ 80,764,245  	if (next_free_slot >= heap_size) {
+ 12,114,633  		debug("OUT OF HEAP, performing GC");
+ 12,114,633  		vm_gc_mark(vm);
+351,324,357  => /home/ethan/Projects/cream/vm.c:vm_gc_mark (4038211x)
+  8,076,422  		object_sweep();
+3,121,537,115  => object.c:object_sweep (4038211x)
+          .  
+ 20,191,055  		if (next_free_slot >= heap_size) {
+          .  			log_err("GC failed to free up space!");
+          .  			return NULL;
+          .  		}
+          .  	}
+          .  
+ 64,611,396  	Cream_obj *obj = malloc(sizeof(Cream_obj));
+2,277,663,331  => ???:malloc (16152849x)
+ 32,305,698  	check_mem(obj);
+          .  
+ 48,458,547  	debug("allocating object in slot %d", next_free_slot);
+113,069,943  	heap[next_free_slot] = obj;
+ 48,458,547  	next_free_slot++;
+ 32,305,698  	object_heap_dump();
+113,069,943  => object.c:object_heap_dump (16152849x)
+          .  
+ 48,458,547  	object_init(obj);
+145,375,641  => object.c:object_init (16152849x)
+          .  
+ 16,152,849  	return obj;
+          .  
+          .  error:
+          .  	return NULL;
+ 32,305,698  }
+          .  
+ 12,114,633  void object_sweep() {
+ 12,114,633  	debug("sweeping heap of %d", next_free_slot);
+  8,076,422  	object_heap_dump();
+ 28,267,477  => object.c:object_heap_dump (4038211x)
+222,101,605  	for (int i = 0; i < heap_size; i++)
+          .  	{
+226,139,816  		Cream_obj* obj = heap[i];
+ 76,726,009  		if (obj == NULL) continue;
+ 80,764,220  		if (obj->marked) {
+ 12,114,633  			debug("skipping marked object");
+ 12,114,633  			obj->marked = false;
+          .  		} else {
+ 48,458,532  			debug("found unmarked object! (%p)", obj);
+ 48,458,532  			object_destroy(obj);
+1,744,507,164  => object.c:object_destroy (16152844x)
+          .  
+          .  			// recompact the heap
+ 48,458,532  			next_free_slot--;
+193,834,128  			heap[i] = heap[next_free_slot];
+ 96,917,064  			heap[next_free_slot] = NULL;
+ 48,458,532  			debug("heap after removal:");
+ 32,305,688  			object_heap_dump();
+113,069,908  => object.c:object_heap_dump (16152844x)
+          .  		}
+          .  	}
+ 12,114,633  	debug("sweep finished, heap now (%d/%zd)", next_free_slot, heap_size);
+  8,076,422  	object_heap_dump();
+ 28,267,477  => object.c:object_heap_dump (4038211x)
+  8,076,422  }
+          .  
+          .  void cream_obj_freeze(Cream_obj *obj) {
+          .  	obj->flags |= FLAG_FROZEN;
+          .  }
+          .  
+ 64,611,376  void object_destroy(Cream_obj *obj) {
+          .  	// puts("cream obj destroyed");
+ 32,305,688  	assert(obj != NULL);
+          .  
+ 64,611,376  	if (obj->type == TYPE_STRING && obj->str_val != NULL) {
+          .  		free(obj->str_val);
+          .  	}
+          .  
+ 64,611,376  	free(obj);
+1,486,061,660  => ???:free (16152844x)
+ 32,305,688  }
+
+--------------------------------------------------------------------------------
+Ir 
+--------------------------------------------------------------------------------
+63  percentage of events annotated
+

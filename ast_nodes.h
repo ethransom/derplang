@@ -59,6 +59,11 @@ typedef struct {
 	ExprList* block;
 } NFuncDef;
 
+typedef struct {
+	List* arg_list;
+	ExprList* block;
+} NAnonFuncDef;
+
 // expression superclass
 typedef enum {
 	NNULL, // if the default is NASSIGNMENT, mistakes lead to segfaults
@@ -74,7 +79,8 @@ typedef enum {
 	NIFSTRUCTURE,
 	NWHILESTRUCTURE,
 	// NFORSTRUCTURE
-	NFUNCDEF
+	NFUNCDEF,
+	NANONFUNCDEF,
 } ExprType;
 
 typedef struct nExpression {
@@ -93,6 +99,7 @@ typedef struct nExpression {
 		NWhileStructure while_structure;
 		// NForStructure for_structure;
 		NFuncDef func_def;
+		NAnonFuncDef anon_func_def;
 	};
 } NExpression;
 

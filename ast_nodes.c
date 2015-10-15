@@ -83,6 +83,16 @@ void ast_exp_print(NExpression* expr, int indent) {
 				treeprintf(indent + 1, "block:\n");
 					ast_list_print(expr->func_def.block, indent + 1);
 			break;
+		case NANONFUNCDEF: {
+			treeprintf(indent, "NAnonFuncDef:\n");
+				treeprintf(indent + 1, "args:\n");
+				LIST_FOREACH(expr->anon_func_def.arg_list, first, next, cur) {
+					treeprintf(indent + 2, "%s\n", (char*) cur->data);
+				}
+				treeprintf(indent + 1, "block:\n");
+					ast_list_print(expr->anon_func_def.block, indent + 1);
+		}
+			break;
 		case NNULL:
 		default:
 			fprintf(stderr, "tried to print AST Node of unknown type!!!\n");
@@ -154,11 +164,8 @@ void ast_expr_free(NExpression* expr) {
 }
 
 bool ast_compile(ExprList* root, file_blob_t* blob) {
-	// initialize the file blob
-	blob->fn_c = 0;
-
 	// first function always for global expressions
-	fn_blob_t* fn = file_blob_add_fn(blob, "");
+	fn_blob_t* fn = file_blob_add_fn(blob, "", FN_BYTECODE);
 	check_mem(fn);
 
 	List list; // used to store bytecodes for expressions in global scope
@@ -167,8 +174,8 @@ bool ast_compile(ExprList* root, file_blob_t* blob) {
 	if (!ast_list_compile(root, &list, blob))
 		return false;
 
-	fn->blob_len = list.length;
-	fn->blob = bytecodes_compress(&list);
+	fn->bytecode.blob_len = list.length;
+	fn->bytecode.blob = bytecodes_compress(&list);
 	List_clear(&list);
 
 	return true;
@@ -304,21 +311,51 @@ bool ast_expr_compile(NExpression* expr, List* output, file_blob_t* blob) {
 
 			debug("encountered function %s\n", expr->func_def.name);
 
-			fn_blob_t* fn = file_blob_add_fn(blob, expr->func_def.name);
+			fn_blob_t* fn = file_blob_add_fn(blob, expr->func_def.name, FN_BYTECODE);
 			fn->argc = expr->func_def.arg_list->length;
 
 			LIST_FOREACH(expr->func_def.arg_list, first, next, cur) {
 				CODE(CODE_ASSIGN, cur->data, 0, 0.0);
 			}
 
-			ast_list_compile(expr->func_def.block, &list, blob);
+			check(
+				ast_list_compile(expr->func_def.block, &list, blob),
+			"couldn't compile body of function %s\n", expr->func_def.name);
 
 			CODE(CODE_RET, NULL, 0, 0.0);
 
-			fn->blob_len = list.length;
-			fn->blob = bytecodes_compress(&list);
-			check_mem(fn->blob);
-			debug("Function %s contains %zd bytecodes", fn->name, fn->blob_len);
+			fn->bytecode.blob_len = list.length;
+			fn->bytecode.blob = bytecodes_compress(&list);
+			check_mem(fn->bytecode.blob);
+			debug("Function %s contains %zd bytecodes", fn->name, fn->bytecode.blob_len);
+		}
+			break;
+		case NANONFUNCDEF: {
+			List* old_output = output;
+
+			List list;
+			List_init(&list);
+			output = &list;
+
+			debug("encountered anonymous function\n");
+
+			literal_t* lit = file_blob_add_literal(blob);
+			lit->anon_fn.argc = expr->anon_func_def.arg_list->length;
+
+			check(ast_list_compile(expr->anon_func_def.block, &list, blob),
+				"couldn't compile body of anon function\n");
+
+			CODE(CODE_RET, NULL, 0, 0.0);
+
+			lit->anon_fn.blob_len = list.length;
+			lit->anon_fn.blob = bytecodes_compress(&list);
+			check_mem(lit->anon_fn.blob);
+			debug("Anon function contains %zd bytecodes", lit->anon_fn.blob_len);
+
+			// now that we've initialized the anon fn, we need to insert
+			// bytecodes to push a ref of it to the stack
+			output = old_output;
+			CODE(CODE_PUSH_FN, (char*) &lit->anon_fn, 0, 0.0);
 		}
 			break;
 		case NNULL:

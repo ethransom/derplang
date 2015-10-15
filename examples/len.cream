@@ -1,0 +1,6 @@
+array = [1,2,3]
+string = "Hello, World!"
+
+println("Array:", array, "is", len(array), "items long")
+println("String:", string, "is", len(string), "items long")
+

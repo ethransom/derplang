@@ -11,13 +11,14 @@
 typedef enum {
 	TYPE_OBJECT,
 	TYPE_ARRAY,
+	TYPE_FN_REF,
 	TYPE_INTEGER,
 	TYPE_FLOAT,
 	TYPE_STRING,
 	TYPE_BOOLEAN
 } Cream_data_type;
 
-// forward declaration placeholder
+// forward declaration placeholders
 struct cream_obj;
 
 typedef struct cream_obj {
@@ -33,6 +34,8 @@ typedef struct cream_obj {
 			int len;
 		} arr_val;
 
+		struct FnBytecode* fn_ref_val;
+
 		// 'native' or 'primitive' types
 		int int_val;
 		double float_val;
@@ -40,6 +43,7 @@ typedef struct cream_obj {
 		bool bool_val;
 	};
 } Cream_obj;
+
 
 #include "vm.h"
 

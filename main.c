@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	file_blob_t blob;
-	blob.name = argv[optind];
+	file_blob_init(&blob, argv[optind]);
 
 	check(ast_compile(programBlock, &blob), "Failed to compile AST");
 

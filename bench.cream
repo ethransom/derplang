@@ -1,0 +1,14 @@
+val = true
+num = 0
+
+while val {
+  num = num + 1
+  if num > 10000000 {
+    val = false
+  }
+}
+
+println(num)
+println(val)
+println("Finished")
+

@@ -58,7 +58,7 @@ error:
 }
 
 err_t* cream_stdlib_len(Cream_vm* vm, int argc, Cream_obj** argv) {
-	if (argc != 1) 
+	if (argc != 1)
 		return err_create(&ArgErr, "len() takes exactly one argument");
 
 	Cream_obj* data = argv[0];
@@ -76,6 +76,23 @@ err_t* cream_stdlib_len(Cream_vm* vm, int argc, Cream_obj** argv) {
 	}
 
 	vm_push_int(vm, len);
+
+	return NULL;
+}
+
+err_t* cream_stdlib_range(Cream_vm* vm, int argc, Cream_obj** argv) {
+	if (argc > 2)
+		return err_create(&ArgErr, "range() takes exactly two arguments");
+
+	Cream_obj* array = argv[0];
+	if (array->type != TYPE_ARRAY)
+		return err_create(&ArgErr, "first argument to range() should be an array");
+
+	Cream_obj* fn = argv[0];
+	if (fn->type != TYPE_FN_REF)
+		return err_create(&ArgErr, "second argument to range() should be a function");
+
+	puts("OMG U DID UR FUNCTION. But it's broken right now.");
 
 	return NULL;
 }

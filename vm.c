@@ -2,6 +2,70 @@
 
 #include "vm.h"
 
+void file_blob_init(file_blob_t* blob, char* name) {
+	blob->fn_c = 0;
+	blob->literal_c = 0;
+	blob->name = name;
+}
+
+fn_blob_t* file_blob_add_fn(file_blob_t* blob, char* name, fn_type_t type) {
+	check(blob->fn_c < 4, "file_blob_t is full!");
+
+	fn_blob_t* fn = malloc(sizeof(fn_blob_t));
+	check_mem(fn);
+	fn->name = name;
+	fn->type = type;
+	if (type == FN_BYTECODE) {
+		fn->bytecode.blob = NULL;
+		fn->bytecode.blob_len = 0;
+	} else {
+		log_warn("unknown fn_blob_t type");
+	}
+
+	blob->fns[blob->fn_c] = fn;
+	blob->fn_c++;
+
+	return fn;
+
+error:
+	return NULL;
+}
+
+literal_t* file_blob_add_literal(file_blob_t* blob) {
+	check(blob->literal_c < 4, "file_blob_t is full of literals!");
+
+	literal_t* lit = malloc(sizeof(literal_t));
+	check_mem(lit);
+
+	blob->literals[blob->literal_c] = lit;
+	blob->literal_c++;
+
+	return lit;
+
+error:
+	return NULL;
+}
+
+void file_blob_print(file_blob_t* blob) {
+	printf("'%s' has %zd functions\n", blob->name, blob->fn_c);
+	for (int i = 0; i < blob->fn_c; i++) {
+		fn_blob_t* fn = blob->fns[i];
+
+		switch (fn->type) {
+			case FN_BYTECODE:
+				printf("BYTECODE FUNC: %s (length: %zd)\n",
+					fn->name, fn->bytecode.blob_len);
+				bytecode_vec_print(fn->bytecode.blob, fn->bytecode.blob_len);
+				break;
+			default:
+				log_warn("fn_blob_t has unknown type, skipping...");
+				continue;
+		}
+
+		printf("END FUNC %s\n", blob->name);
+	}
+}
+
 //============================== HELPER FUNCTIONS ==============================
 // marked as static and not forward-declared in the header so as to be private
 
@@ -137,6 +201,12 @@ static void vm_push_bool(Cream_vm *vm, bool b) {
 	data->bool_val = b;
 	vm_stack_push(vm, data);
 }
+static void vm_push_fn_ref(Cream_vm *vm, FnBytecode* ref) {
+	Cream_obj* data = object_create(vm);
+	data->type = TYPE_FN_REF;
+	data->fn_ref_val = (struct FnBytecode*) ref;
+	vm_stack_push(vm, data);
+}
 
 Cream_vm* cream_vm_create() {
 	// puts("cream obj created");
@@ -163,6 +233,7 @@ Cream_vm* cream_vm_create() {
 	cream_add_native(vm, "println", cream_stdlib_println);
 	cream_add_native(vm, "print", cream_stdlib_print);
 	cream_add_native(vm, "len", cream_stdlib_len);
+	cream_add_native(vm, "range", cream_stdlib_range);
 
 	return vm;
 error:
@@ -227,7 +298,7 @@ bool cream_run_native(Cream_vm* vm, char* name, int argc) {
 			vm->stack_len -= argc; // destructive, because fn call pops the stack
 			Cream_obj** stack_slice = vm->stack + vm->stack_len;
 
-			native->fn(vm, argc, stack_slice);
+			vm->err = native->fn(vm, argc, stack_slice);
 			return true;
 		}
 	}
@@ -259,14 +330,12 @@ void cream_vm_run(Cream_vm *vm) {
 	debug("beginning execution...");
 
 	check(vm->blob->fn_c > 0, "file was empty?");
-	size_t num_bytecodes = vm->blob->fns[0]->blob_len;
-	debug("%zu bytecodes", num_bytecodes);
 
 	// start at the first instruction of the first function
 	fn_blob_t* cur_fn = vm->blob->fns[0];
 	size_t pointer = 0;
-	while (pointer < cur_fn->blob_len) {
-		instr* bytecode = &cur_fn->blob[pointer];
+	while (pointer < cur_fn->bytecode.blob_len) {
+		instr* bytecode = &cur_fn->bytecode.blob[pointer];
 
 		debug("code: %s @ %zd",
 			code_type_to_str(bytecode->code),
@@ -305,6 +374,9 @@ void cream_vm_run(Cream_vm *vm) {
 
 				vm_stack_push(vm, obj); // push before we mess with the stack!
 			}
+				break;
+			case CODE_PUSH_FN:
+				vm_push_fn_ref(vm, (FnBytecode*) bytecode->arg1);
 				break;
 
 			// ================== MATHEMATICAL OPERATIONS =================== //
@@ -378,7 +450,7 @@ void cream_vm_run(Cream_vm *vm) {
 				debug("returning to %zd from %zd", last_frame->return_addr, pointer);
 				pointer = last_frame->return_addr;
 				cur_fn = last_frame->return_fn;
-				
+
 				Map_destroy(last_frame->symbol_table);
 				free(last_frame);
 			}
@@ -405,8 +477,6 @@ void cream_vm_run(Cream_vm *vm) {
 				pointer = bytecode->arg2;
 				continue;
 			}
-				break;
-			// case CODE_REPEAT:
 				break;
 			case CODE_NULL:
 				break;
@@ -441,7 +511,7 @@ error:
 		char* name;
 		if (frame->return_fn == NULL)
 			name = "ROOT";
-		else 
+		else
 			name = frame->return_fn->name;
 
 		printf("\t%s:%zd\n", name, frame->return_addr);
