@@ -1,5 +1,5 @@
 /*
- * Implements the Cream virtual machine
+ * Implements the Derplang virtual machine
  * This includes the mark phase of garbage collection
 */
 
@@ -92,7 +92,7 @@ typedef struct {
 } Stack_frame;
 
 typedef struct {
-  Cream_obj** stack;
+  Derp_obj** stack;
   int stack_len;
 
   List* call_stack; // list of Stack_frames
@@ -106,34 +106,34 @@ typedef struct {
   // size_t num_bytecodes;
 
   List* std_lib;
-} Cream_vm;
+} Derp_vm;
 
-typedef err_t* (*Cream_native_fn)(Cream_vm* vm, int argc, Cream_obj** argv);
+typedef err_t* (*Derp_native_fn)(Derp_vm* vm, int argc, Derp_obj** argv);
 
 typedef struct {
   char* name;
-  Cream_native_fn fn;
-} Cream_native;
+  Derp_native_fn fn;
+} Derp_native;
 
 #include "stdlib.h"
 
-void vm_push_int(Cream_vm *vm, int i);
+void vm_push_int(Derp_vm *vm, int i);
 
 /* allocates and initializes a vm, then returns a pointer to it */
-Cream_vm* cream_vm_create();
+Derp_vm* derp_vm_create();
 
 /* deallocates a vm and all its associated data */
-void cream_vm_destroy(Cream_vm *obj);
+void derp_vm_destroy(Derp_vm *obj);
 
-/* add a function to the cream standard library */
-void cream_add_native(Cream_vm* vm, char* name, Cream_native_fn fn);
+/* add a function to the Derplang standard library */
+void derp_add_native(Derp_vm* vm, char* name, Derp_native_fn fn);
 
 /* call the standard libary function with the given name, with arguments
  * coming from the vm's stack */
-bool cream_run_native(Cream_vm* vm, char* name, int argc);
+bool derp_run_native(Derp_vm* vm, char* name, int argc);
 
 /* stop the world, then mark all objects reachable from the current scope */
-void vm_gc_mark(Cream_vm *vm);
+void vm_gc_mark(Derp_vm *vm);
 
 /* run the vm */
-void cream_vm_run(Cream_vm *vm);
+void derp_vm_run(Derp_vm *vm);

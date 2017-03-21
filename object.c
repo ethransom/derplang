@@ -6,11 +6,11 @@
 #include "debug.h"
 #include "object.h"
 
-Cream_obj** heap = NULL;
+Derp_obj** heap = NULL;
 size_t heap_size = 8;
 int next_free_slot = 0;
 
-void object_init(Cream_obj* obj) {
+void object_init(Derp_obj* obj) {
 	obj->type = TYPE_OBJECT;
 
 	obj->flags = 0;
@@ -20,10 +20,10 @@ void object_heap_dump() {
 	debug("heap: %p %p %p %p", heap[0], heap[1], heap[2], heap[3]);
 }
 
-Cream_obj* object_create(Cream_vm* vm) {
+Derp_obj* object_create(Derp_vm* vm) {
 	if (heap == NULL) {
-		debug("allocating heap of size %zd (each object %zd bytes)", heap_size, sizeof(Cream_obj));
-		heap = malloc(sizeof(Cream_obj*) * heap_size);
+		debug("allocating heap of size %zd (each object %zd bytes)", heap_size, sizeof(Derp_obj));
+		heap = malloc(sizeof(Derp_obj*) * heap_size);
 		for (int i = 0; i < heap_size; ++i)
 		{
 			heap[i] = NULL;
@@ -41,7 +41,7 @@ Cream_obj* object_create(Cream_vm* vm) {
 		}
 	}
 
-	Cream_obj *obj = malloc(sizeof(Cream_obj));
+	Derp_obj *obj = malloc(sizeof(Derp_obj));
 	check_mem(obj);
 
 	debug("allocating object in slot %d", next_free_slot);
@@ -62,7 +62,7 @@ void object_sweep() {
 	object_heap_dump();
 	for (int i = 0; i < heap_size; i++)
 	{
-		Cream_obj* obj = heap[i];
+		Derp_obj* obj = heap[i];
 		if (obj == NULL) continue;
 		if (obj->marked) {
 			debug("skipping marked object");
@@ -83,12 +83,12 @@ void object_sweep() {
 	object_heap_dump();
 }
 
-void cream_obj_freeze(Cream_obj *obj) {
+void derp_obj_freeze(Derp_obj *obj) {
 	obj->flags |= FLAG_FROZEN;
 }
 
-void object_destroy(Cream_obj *obj) {
-	// puts("cream obj destroyed");
+void object_destroy(Derp_obj *obj) {
+	// puts("derp obj destroyed");
 	assert(obj != NULL);
 
 	if (obj->type == TYPE_STRING && obj->str_val != NULL) {

@@ -4,8 +4,8 @@
 
 #include "stdlib.h"
 
-err_t* cream_stdlib_println(Cream_vm* vm, int argc, Cream_obj** argv) {
-	err_t* err = cream_stdlib_print(vm, argc, argv);
+err_t* derp_stdlib_println(Derp_vm* vm, int argc, Derp_obj** argv) {
+	err_t* err = derp_stdlib_print(vm, argc, argv);
 
 	if (err == NULL) {
 		printf("\n");
@@ -14,9 +14,9 @@ err_t* cream_stdlib_println(Cream_vm* vm, int argc, Cream_obj** argv) {
 	return err;
 }
 
-err_t* cream_stdlib_print(Cream_vm* vm, int argc, Cream_obj** argv) {
+err_t* derp_stdlib_print(Derp_vm* vm, int argc, Derp_obj** argv) {
 	for (int i = 0; i < argc; i++) {
-		Cream_obj* data = argv[i];
+		Derp_obj* data = argv[i];
 
 		debug("Printing type: %d", data->type);
 
@@ -28,7 +28,7 @@ err_t* cream_stdlib_print(Cream_vm* vm, int argc, Cream_obj** argv) {
 				putchar('[');
 				for (int i = 0; i < data->arr_val.len; ++i) {
 					if (i != 0) putchar(',');
-					err_t* err = cream_stdlib_print(vm, 1, &data->arr_val.vec[i]);
+					err_t* err = derp_stdlib_print(vm, 1, &data->arr_val.vec[i]);
 					if (err != NULL) return err;
 				}
 				putchar(']');
@@ -57,11 +57,11 @@ error:
 	return err_create(&InternalErr, NULL);
 }
 
-err_t* cream_stdlib_len(Cream_vm* vm, int argc, Cream_obj** argv) {
+err_t* derp_stdlib_len(Derp_vm* vm, int argc, Derp_obj** argv) {
 	if (argc != 1)
 		return err_create(&ArgErr, "len() takes exactly one argument");
 
-	Cream_obj* data = argv[0];
+	Derp_obj* data = argv[0];
 	int len;
 
 	switch (data->type) {
@@ -80,15 +80,15 @@ err_t* cream_stdlib_len(Cream_vm* vm, int argc, Cream_obj** argv) {
 	return NULL;
 }
 
-err_t* cream_stdlib_range(Cream_vm* vm, int argc, Cream_obj** argv) {
+err_t* derp_stdlib_range(Derp_vm* vm, int argc, Derp_obj** argv) {
 	if (argc > 2)
 		return err_create(&ArgErr, "range() takes exactly two arguments");
 
-	Cream_obj* array = argv[0];
+	Derp_obj* array = argv[0];
 	if (array->type != TYPE_ARRAY)
 		return err_create(&ArgErr, "first argument to range() should be an array");
 
-	Cream_obj* fn = argv[0];
+	Derp_obj* fn = argv[0];
 	if (fn->type != TYPE_FN_REF)
 		return err_create(&ArgErr, "second argument to range() should be a function");
 

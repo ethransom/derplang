@@ -1,4 +1,4 @@
-# Cream
+# Derplang
 
 An absolutely pointless dynamic, interpreted, procedural language. It has a
 garbage collector, though. I've been told that gives me hacker cred.
@@ -7,20 +7,20 @@ garbage collector, though. I've been told that gives me hacker cred.
 
 ```shell
 $ make
-$ ./main examples/hello_world.cream
+$ ./main examples/hello_world.derp
 ```
 
 ## FAQ
 
 #### Why do we need yet another language?
 
-We don't. 
+We don't.
 
-#### What does Cream bring to the table over Ruby, Python, or Javascript?
+#### What does Derplang bring to the table over Ruby, Python, or Javascript?
 
 Absolutely nothing.
 
-#### Does Cream have objects? 
+#### Does Derplang have objects?
 
 No.
 
@@ -54,7 +54,7 @@ or something.
 
 Pull requests containing code are probably a no-no. This is mostly a personal
 project that I'm writing for the fun of writing. However, I'd LOVE to hear
-feedback on existing code. Tell me how my code sucks. Tell me how Cream sucks.
+feedback on existing code. Tell me how my code sucks. Tell me how Derplang sucks.
 
 ## Conventions
 

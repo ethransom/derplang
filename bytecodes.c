@@ -2,8 +2,8 @@
 
 #include "debug.h"
 
-// must match definition of Cream_code_type in 'vm.h'
-char Cream_code_names[][16] = {
+// must match definition of Derp_code_type in 'vm.h'
+char Derp_code_names[][16] = {
     "NULL",
     "PUSH",
     "PUSH_INT",
@@ -35,8 +35,8 @@ char Cream_code_names[][16] = {
     "REPEAT"
 };
 
-const char* code_type_to_str(Cream_code_type code) {
-	return Cream_code_names[(int) code];
+const char* code_type_to_str(Derp_code_type code) {
+	return Derp_code_names[(int) code];
 }
 
 void bytecode_print(instr* code) {

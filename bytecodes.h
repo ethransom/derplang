@@ -1,5 +1,5 @@
 /*
- * Code and types for handling bytecodes, the stuff from which all Cream programs are made
+ * Code and types for handling bytecodes, the stuff from which all Derp programs are made
 */
 
 #pragma once
@@ -43,10 +43,10 @@ typedef enum {
     CODE_JUMP_IF_FALSE,
     CODE_JUMP,
     CODE_REPEAT
-} Cream_code_type;
+} Derp_code_type;
 
 typedef struct {
-  Cream_code_type code;
+  Derp_code_type code;
 
   // TODO: compress with union
   char* arg1;
@@ -62,7 +62,7 @@ typedef instr* BCVec;
  * returns a pointer to a string representation of a bytecode's type
  * example: CODE_ADD -> "add"
 */
-const char* code_type_to_str(Cream_code_type code);
+const char* code_type_to_str(Derp_code_type code);
 
 // Prints an individual bytecode
 void bytecode_print(instr* code);

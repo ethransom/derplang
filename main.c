@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-// #include "cream_fn.h"
 #include "debug.h"
 #include "vm.h"
 #include "object.h"
@@ -117,7 +116,7 @@ int main(int argc, char *argv[]) {
 		input = fopen(argv[optind], "r");
 	}
 
-	Cream_vm* vm = cream_vm_create();
+	Derp_vm* vm = derp_vm_create();
 
 	yyin = input;
 	do {
@@ -143,9 +142,9 @@ int main(int argc, char *argv[]) {
 		return EXIT_SUCCESS;
 	}
 
-	cream_vm_run(vm);
+	derp_vm_run(vm);
 
-	cream_vm_destroy(vm);
+	derp_vm_destroy(vm);
 
 	return EXIT_SUCCESS;
 error:

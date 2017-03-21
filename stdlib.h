@@ -1,5 +1,5 @@
 /*
- * Contains the C implementation of the Cream standard library
+ * Contains the C implementation of the Derplang standard library
 */
 
 #pragma once
@@ -9,10 +9,10 @@
 
 #include "debug.h"
 
-err_t* cream_stdlib_println(Cream_vm* vm, int argc, Cream_obj** argv);
+err_t* derp_stdlib_println(Derp_vm* vm, int argc, Derp_obj** argv);
 
-err_t* cream_stdlib_print(Cream_vm* vm, int argc, Cream_obj** argv);
+err_t* derp_stdlib_print(Derp_vm* vm, int argc, Derp_obj** argv);
 
-err_t* cream_stdlib_len(Cream_vm* vm, int argc, Cream_obj** argv);
+err_t* derp_stdlib_len(Derp_vm* vm, int argc, Derp_obj** argv);
 
-err_t* cream_stdlib_range(Cream_vm* vm, int argc, Cream_obj** argv);
+err_t* derp_stdlib_range(Derp_vm* vm, int argc, Derp_obj** argv);

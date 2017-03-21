@@ -195,7 +195,7 @@ error:
 	return false;
 }
 
-instr* _mkbytecode(Cream_code_type type, char* str, int i, double f) {
+instr* _mkbytecode(Derp_code_type type, char* str, int i, double f) {
 	instr* code = malloc(sizeof(instr));
 	check_mem(code);
 	code->code = type;
@@ -250,7 +250,7 @@ bool ast_expr_compile(NExpression* expr, List* output, file_blob_t* blob) {
 
 			// the type of token denotes what type of operation we're performing
 			// we need to generate a bytecode based on this
-			Cream_code_type type = 0;
+			Derp_code_type type = 0;
 			switch (expr->binary_op.op) {
 				case TPLUS:		type = CODE_ADD; break;
 				case TMINUS:	type = CODE_SUB; break;

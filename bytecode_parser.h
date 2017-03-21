@@ -9,12 +9,12 @@
 #include "stdlib.h"
 #include "bytecodes.h"
 
-Cream_code_type cream_str2_bytecode(char* str); 
+Derp_code_type derp_str2_bytecode(char* str);
 
-bool cream_instr_from_line(char* line, instr** instruction);
+bool derp_instr_from_line(char* line, instr** instruction);
 
-bool cream_bytecode_parse_stream(FILE* input, Cream_vm *vm);
+bool derp_bytecode_parse_stream(FILE* input, Derp_vm *vm);
 
-bool cream_bytecode_parse_string(Cream_vm* vm, char* buffer);
+bool derp_bytecode_parse_string(Derp_vm* vm, char* buffer);
 
 #endif

@@ -7,7 +7,7 @@
 
 #include <stdbool.h>
 
-// GENERIC Cream value
+// GENERIC Derplang value
 typedef enum {
 	TYPE_OBJECT,
 	TYPE_ARRAY,
@@ -16,13 +16,13 @@ typedef enum {
 	TYPE_FLOAT,
 	TYPE_STRING,
 	TYPE_BOOLEAN
-} Cream_data_type;
+} Derp_data_type;
 
 // forward declaration placeholders
-struct cream_obj;
+struct derp_obj;
 
-typedef struct cream_obj {
-	Cream_data_type type;
+typedef struct derp_obj {
+	Derp_data_type type;
 	bool marked; // good ol' mark and sweep
 	unsigned char flags; // first slot: frozen
 	union {
@@ -30,7 +30,7 @@ typedef struct cream_obj {
 		void* klass;
 
 		struct {
-			struct cream_obj** vec;
+			struct derp_obj** vec;
 			int len;
 		} arr_val;
 
@@ -42,7 +42,7 @@ typedef struct cream_obj {
 		char* str_val;
 		bool bool_val;
 	};
-} Cream_obj;
+} Derp_obj;
 
 
 #include "vm.h"
@@ -52,12 +52,12 @@ typedef struct cream_obj {
 #define FLAG_FROZEN (1 << 0)
 #define OBJ_IS_FROZEN(obj) (obj->flags & FLAG_FROZEN)
 
-void object_init(Cream_obj* object);
+void object_init(Derp_obj* object);
 
-Cream_obj* object_create();
+Derp_obj* object_create();
 
 void object_sweep();
 
-void cream_obj_freeze(Cream_obj *obj);
+void derp_obj_freeze(Derp_obj *obj);
 
-void object_destroy(Cream_obj *obj);
+void object_destroy(Derp_obj *obj);
